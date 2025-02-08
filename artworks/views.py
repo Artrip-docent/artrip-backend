@@ -13,11 +13,46 @@ class AnalyzeImageView(APIView):
 
     # Mock 데이터: 임의로 저장한 5개의 작품 정보
     MOCK_ARTWORKS = [
-        {"artwork_id": 1, "title": "Mona Lisa", "artist": "Leonardo da Vinci"},
-        {"artwork_id": 2, "title": "Starry Night", "artist": "Vincent van Gogh"},
-        {"artwork_id": 3, "title": "The Persistence of Memory", "artist": "Salvador Dalí"},
-        {"artwork_id": 4, "title": "The Scream", "artist": "Edvard Munch"},
-        {"artwork_id": 5, "title": "The Birth of Venus", "artist": "Sandro Botticelli"},
+        {
+            "artwork_id": 1,
+            "title": "Mona Lisa",
+            "artist": "Leonardo da Vinci",
+            "year": 1503,
+            "style": "Renaissance",
+            "description": "A portrait of a woman with a mysterious smile, considered a masterpiece of Renaissance art.",
+        },
+        {
+            "artwork_id": 2,
+            "title": "Starry Night",
+            "artist": "Vincent van Gogh",
+            "year": 1889,
+            "style": "Post-Impressionism",
+            "description": "A depiction of Van Gogh's view from the asylum, featuring swirling stars and a bright moon.",
+        },
+        {
+            "artwork_id": 3,
+            "title": "The Persistence of Memory",
+            "artist": "Salvador Dalí",
+            "year": 1931,
+            "style": "Surrealism",
+            "description": "This surreal painting features melting clocks draped over a barren landscape, symbolizing the fluidity of time.",
+        },
+        {
+            "artwork_id": 4,
+            "title": "The Scream",
+            "artist": "Edvard Munch",
+            "year": 1893,
+            "style": "Expressionism",
+            "description": "An iconic artwork capturing existential angst, with a figure screaming on a bridge under a blood-red sky.",
+        },
+        {
+            "artwork_id": 5,
+            "title": "The Birth of Venus",
+            "artist": "Sandro Botticelli",
+            "year": 1486,
+            "style": "Renaissance",
+            "description": "This masterpiece depicts the goddess Venus emerging from the sea on a shell, representing divine beauty and love.",
+        }
     ]
 
     def get(self, request):
@@ -39,11 +74,46 @@ class UploadArtworkView(APIView):
 
         # Mock 데이터: 임의로 저장한 5개의 작품 정보
         MOCK_ARTWORKS = [
-            {"artwork_id": 1, "title": "Mona Lisa", "artist": "Leonardo da Vinci"},
-            {"artwork_id": 2, "title": "Starry Night", "artist": "Vincent van Gogh"},
-            {"artwork_id": 3, "title": "The Persistence of Memory", "artist": "Salvador Dalí"},
-            {"artwork_id": 4, "title": "The Scream", "artist": "Edvard Munch"},
-            {"artwork_id": 5, "title": "The Birth of Venus", "artist": "Sandro Botticelli"},
+        {
+            "artwork_id": 1,
+            "title": "Mona Lisa",
+            "artist": "Leonardo da Vinci",
+            "year": 1503,
+            "style": "Renaissance",
+            "description": "A portrait of a woman with a mysterious smile, considered a masterpiece of Renaissance art.",
+        },
+        {
+            "artwork_id": 2,
+            "title": "Starry Night",
+            "artist": "Vincent van Gogh",
+            "year": 1889,
+            "style": "Post-Impressionism",
+            "description": "A depiction of Van Gogh's view from the asylum, featuring swirling stars and a bright moon.",
+        },
+        {
+            "artwork_id": 3,
+            "title": "The Persistence of Memory",
+            "artist": "Salvador Dalí",
+            "year": 1931,
+            "style": "Surrealism",
+            "description": "This surreal painting features melting clocks draped over a barren landscape, symbolizing the fluidity of time.",
+        },
+        {
+            "artwork_id": 4,
+            "title": "The Scream",
+            "artist": "Edvard Munch",
+            "year": 1893,
+            "style": "Expressionism",
+            "description": "An iconic artwork capturing existential angst, with a figure screaming on a bridge under a blood-red sky.",
+        },
+        {
+            "artwork_id": 5,
+            "title": "The Birth of Venus",
+            "artist": "Sandro Botticelli",
+            "year": 1486,
+            "style": "Renaissance",
+            "description": "This masterpiece depicts the goddess Venus emerging from the sea on a shell, representing divine beauty and love.",
+        }
         ]
 
         def post(self, request):
@@ -55,11 +125,14 @@ class UploadArtworkView(APIView):
             # 2. Mock 데이터에서 랜덤으로 작품 선택
             artwork = random.choice(self.MOCK_ARTWORKS)
 
-            # 3. 응답 데이터 반환 (이미지는 무시)
+            # 3. 응답 데이터 반환 (이미지는 일단 무시)
             return Response({
                 "message": "Mock data returned.",
                 "artwork_name": artwork["title"],
                 "artist": artwork["artist"],
+                "year": artwork["year"],
+                "style": artwork["style"],
+                "description": artwork["description"],  # 고정 설명 추가
                 "uploaded_filename": uploaded_image.name,  # 업로드된 파일 이름 반환 (테스트용)
             }, status=status.HTTP_200_OK)
 

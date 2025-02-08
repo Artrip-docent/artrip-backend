@@ -95,7 +95,7 @@ def chat_view(request):
 
             # 스트리밍 기능을 활성화한 LLM 초기화
             llm = ChatOpenAI(
-                model_name="gpt-4o",
+                model_name="gpt-4o-mini",   # 🔥 gpt-4o → gpt-4o-mini 로 변경
                 temperature=0,
                 openai_api_key=settings.OPENAI_API_KEY,
                 streaming=True,
