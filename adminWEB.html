@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>챗봇 관리자</title>
+    <style>
+      /* 전체 레이아웃 */
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f0f2f5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      /* 컨테이너 스타일 */
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+        width: 400px;
+        text-align: center;
+        margin: 10px;
+      }
+
+      /* 제목 스타일 */
+      h1 {
+        font-size: 20px;
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      /* 입력창 스타일 */
+      input {
+        width: calc(100% - 20px);
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        display: block;
+      }
+
+      /* 버튼 스타일 */
+      button {
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s ease-in-out;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      /* 리스트 스타일 */
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0;
+      }
+
+      li {
+        background: #eef2ff;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        font-size: 14px;
+        text-align: left;
+      }
+
+      /* 챗봇 응답 스타일 */
+      #response {
+        font-weight: bold;
+        color: #007bff;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🏛 미술관/예술관 선택</h1>
+      <select id="gallery-select" onchange="updateGallery()">
+        <option value="">미술관/예술관을 선택하세요</option>
+        <option value="국립현대미술관">국립현대미술관</option>
+        <option value="서울시립미술관">서울시립미술관</option>
+        <option value="리움미술관">리움미술관</option>
+        <option value="예술의전당">예술의전당</option>
+      </select>
+      <p id="selected-gallery">선택된 장소: 없음</p>
+    </div>
+    <div class="container">
+      <h1>📌 챗봇 정보 추가</h1>
+
+      <!-- 파일 선택 입력 필드 -->
+      <input type="file" id="info-file" accept=".txt" />
+      <button onclick="readFile()">파일 읽기</button>
+
+      <ul id="info-list">
+        <!-- 여기에 파일에서 읽어온 정보가 추가됩니다. -->
+      </ul>
+    </div>
+
+    <div class="container">
+      <h1>💬 챗봇 테스트</h1>
+
+      <!-- 사용자 질문 입력 필드 -->
+      <input
+        type="text"
+        id="user_input"
+        placeholder="챗봇에게 질문하기"
+        oninput="testChatbot()"
+      />
+
+      <!-- 질문에 대한 응답 표시 영역 -->
+      <p id="response"></p>
+    </div>
+
+    <script>
+      // 파일을 읽고 챗봇 정보 목록에 추가하는 함수
+      function readFile() {
+        const fileInput = document.getElementById('info-file');
+        const file = fileInput.files[0]; // 사용자가 선택한 파일
+
+        if (!file) {
+          alert('파일을 선택해주세요.');
+          return;
+        }
+
+        const reader = new FileReader(); // FileReader 객체 생성
+
+        // 파일 읽기 완료 시 처리할 함수
+        reader.onload = function (e) {
+          const fileContent = e.target.result; // 파일 내용
+
+          // 파일 내용을 줄 단위로 분리하여 리스트로 추가
+          const lines = fileContent.split('\n');
+          const infoList = document.getElementById('info-list');
+
+          lines.forEach(function (line) {
+            if (line.trim()) {
+              const listItem = document.createElement('li');
+              listItem.textContent = line.trim(); // 줄 단위로 정보를 리스트에 추가
+              infoList.appendChild(listItem);
+            }
+          });
+        };
+
+        // 파일 읽기 시작
+        reader.readAsText(file, 'UTF-8');
+      }
+
+      // 챗봇 테스트 함수
+      function testChatbot() {
+        let userInput = document.getElementById('user_input').value;
+
+        if (!userInput) {
+          document.getElementById('response').textContent = ''; // 입력이 없으면 응답을 비웁니다
+          return;
+        }
+
+        // 여기서 실제 챗봇의 응답을 처리하는 방식으로 수정
+        // 현재는 간단한 로직을 예시로 넣었습니다.
+        let response = '';
+
+        if (userInput.includes('안녕하세요')) {
+          response = '안녕하세요! 챗봇입니다.';
+        } else if (userInput.includes('챗봇 테스트')) {
+          response = '테스트가 정상적으로 진행되고 있습니다!';
+        } else {
+          response =
+            '저는 그 질문을 이해하지 못했습니다. 다른 질문을 해주세요.';
+        }
+
+        document.getElementById('response').textContent = response;
+      }
+    </script>
+  </body>
+</html>
