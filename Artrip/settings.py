@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -86,13 +86,13 @@ WSGI_APPLICATION = "Artrip.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "artrip_db",  # MySQL 데이터베이스 이름
-        "USER": "root",  # MySQL 사용자 이름
-        "PASSWORD": "cbcb1018",  # MySQL 비밀번호
-        "HOST": "127.0.0.1",  # 로컬 개발 환경에서는 localhost
-        "PORT": "3306",  # MySQL 기본 포트
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        # 'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('HOST'),
+        'PORT': os.getenv('PORT'),
     }
 }
 
@@ -138,6 +138,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-load_dotenv()
+
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
