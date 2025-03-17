@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>관리자 웹페이지</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f0f2f5;
+        padding: 20px;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      input, select, button {
+        padding: 8px;
+        margin: 5px 0;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .message {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+      }
+      .error { background: #f8d7da; color: #721c24; }
+      .success { background: #d4edda; color: #155724; }
+    </style>
+  </head>
+  <body>
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="container">
+      <h1>전시회 관리</h1>
+      <p>전시회를 선택하거나, 없으면 추가하세요.</p>
+
+      <!-- 전시회 추가 폼 -->
+      <form method="post">
+        {% csrf_token %}
+        <label for="exhibition-form">새 전시회 추가</label>
+        <hr />
+        {{ exhibition_form.gallery.label_tag }}<br />
+        <!-- 전시회 폼에서 갤러리 선택 필드가 자동으로 생성됨 -->
+        {{ exhibition_form.gallery }}
+        <br />
+        {{ exhibition_form.title.label_tag }}<br />
+        {{ exhibition_form.title }}
+        <br />
+        {{ exhibition_form.start_date.label_tag }}<br />
+        {{ exhibition_form.start_date }}
+        <br />
+        {{ exhibition_form.end_date.label_tag }}<br />
+        {{ exhibition_form.end_date }}
+        <br />
+        <button type="submit" name="submit_exhibition">전시회 추가</button>
+      </form>
+
+      <br />
+      <!-- + 버튼으로 갤러리 추가 폼 열기 -->
+      <button onclick="toggleGalleryForm()">+ 갤러리 추가</button>
+
+      <!-- 갤러리 추가 폼 (처음에는 숨김) -->
+      <div id="gallery-form-container" class="hidden">
+        <hr />
+        <form method="post">
+          {% csrf_token %}
+          {{ gallery_form.name.label_tag }}<br />
+          {{ gallery_form.name }}
+          <br />
+          <button type="submit" name="submit_gallery">갤러리 추가</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2>문서 업로드</h2>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ document_form.exhibition.label_tag }}<br />
+        {{ document_form.exhibition }}
+        <br />
+        {{ document_form.file.label_tag }}<br />
+        {{ document_form.file }}
+        <br />
+        <button type="submit" name="submit_document">문서 업로드</button>
+      </form>
+    </div>
+
+    <!-- 예: 저장된 문서, 전시회 목록 표시 등 -->
+    <div class="container">
+      <h2>등록된 전시회</h2>
+      <ul>
+        {% for exh in exhibitions %}
+          <li>
+            {{ exh.title }} - {{ exh.gallery.name }}
+            ({{ exh.start_date }} ~ {{ exh.end_date }})
+          </li>
+        {% empty %}
+          <li>전시회가 없습니다.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="container">
+      <h2>등록된 문서</h2>
+      <ul>
+        {% for doc in documents %}
+          <li>
+            {{ doc.exhibition.title }} ({{ doc.exhibition.gallery.name }}) - {{ doc.created_at|date:"Y-m-d" }}
+            <br />
+            <pre>{{ doc.content }}</pre>
+          </li>
+        {% empty %}
+          <li>문서가 없습니다.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <script>
+      function toggleGalleryForm() {
+        const formContainer = document.getElementById("gallery-form-container");
+        formContainer.classList.toggle("hidden");
+      }
+    </script>
+  </body>
+</html>
