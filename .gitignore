@@ -2,3 +2,6 @@
 .idea/
 clip_models/
 
+*.pyc
+.DS_Store
+__pycache__/
