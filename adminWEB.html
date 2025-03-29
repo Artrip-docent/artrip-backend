@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>챗봇 관리자</title>
+    <style>
+      /* 전체 레이아웃 */
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f0f2f5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        padding: 20px;
+      }
+      /* 컨테이너 스타일 */
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+        width: 400px;
+        text-align: center;
+        margin: 10px;
+      }
+      /* 제목 스타일 */
+      h1 {
+        font-size: 20px;
+        color: #333;
+        margin-bottom: 15px;
+      }
+      /* 입력창 스타일 */
+      input, select {
+        width: calc(100% - 20px);
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        display: block;
+      }
+      /* 버튼 스타일 */
+      button {
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s ease-in-out;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      /* 리스트 스타일 */
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0;
+      }
+      li {
+        background: #eef2ff;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        font-size: 14px;
+        text-align: left;
+      }
+      /* 메시지 스타일 */
+      .message {
+        color: green;
+        font-weight: bold;
+      }
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Django 메시지 표시 -->
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="container">
+      <h1>🏛 미술관/예술관 선택 및 파일 업로드</h1>
+      <!-- 파일 업로드 및 미술관 선택 폼 -->
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <select id="gallery-select" name="gallery" onchange="updateGallery()">
+          <option value="">미술관/예술관을 선택하세요</option>
+          <option value="국립현대미술관">국립현대미술관</option>
+          <option value="서울시립미술관">서울시립미술관</option>
+          <option value="리움미술관">리움미술관</option>
+          <option value="예술의전당">예술의전당</option>
+        </select>
+        <p id="selected-gallery">선택된 장소: 없음</p>
+        <input type="file" id="info-file" name="file" accept=".txt" />
+        <button type="submit">파일 업로드</button>
+      </form>
+    </div>
+
+    <div class="container">
+      <h1>저장된 문서 목록</h1>
+      <ul>
+        {% for doc in documents %}
+          <li>
+            <strong>{{ doc.gallery }}</strong> - {{ doc.created_at|date:"Y-m-d H:i" }}<br />
+            <pre style="white-space: pre-wrap; word-break: break-all;">{{ doc.content }}</pre>
+          </li>
+        {% empty %}
+          <li>저장된 문서가 없습니다.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <script>
+      // 미술관 선택 시 선택된 값을 표시하는 함수
+      function updateGallery() {
+        var select = document.getElementById('gallery-select');
+        var selected = select.options[select.selectedIndex].text;
+        document.getElementById('selected-gallery').textContent = "선택된 장소: " + selected;
+      }
+    </script>
+  </body>
+</html>
