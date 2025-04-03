@@ -15,6 +15,9 @@ import os
 import pinecone
 from dotenv import load_dotenv
 load_dotenv()
+
+SOCIAL_AUTH_KAKAO_KEY = os.getenv('KAKAO_REST_API_KEY')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -45,7 +48,27 @@ INSTALLED_APPS = [
     'drf_yasg',  # Swagger 지원 패키지
     "corsheaders",
     'chat',
+    'social_django',
+    'accounts',
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.kakao.KakaoOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+# 카카오 설정
+SOCIAL_AUTH_KAKAO_REDIRECT_URI = 'http://localhost:8000/oauth/complete/kakao/'
+
+# 로그인 성공/실패 리디렉션
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -56,6 +79,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
 # 모든 도메인 허용 (테스트 단계에서만. 나중에 특정 도메인만 허용으로 수정)
@@ -75,6 +99,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },

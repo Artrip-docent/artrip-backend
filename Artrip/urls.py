@@ -41,6 +41,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('', home),  # 루트 URL 처리
     path("admin/", admin.site.urls),
+    path('oauth/', include('social_django.urls', namespace='social')),
+    path('auth/', include('accounts.urls')),
     path('artworks/', include('artworks.urls')), # artworks 앱의 url 연결
     path("api/chat/", include("chat.urls")),
     # 🔹 Swagger URLs 추가
