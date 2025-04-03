@@ -1,164 +1,71 @@
+# artworks/views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser  # 이미지 업로드 처리를 위한 파서
+from rest_framework.parsers import MultiPartParser
 from rest_framework import status
-import random # 랜덤 데이터 선택 목적(mock data 테스트용)
-# from .utils import call_clip_model  # CLIP 모델 호출 함수
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from django.apps import apps
+from io import BytesIO
+from PIL import Image
+import torch
 
-class AnalyzeImageView(APIView):
+# Artwork 모델: DB의 작품 메타데이터에 대응
+from .models import Artwork
 
+class UploadArtworkView(APIView):
+    """
+    사용자가 업로드한 이미지 CLIP으로 벡터화하고
+    Faiss 인덱스를 통해 유사 작품 id를 찾은 후 db에서 해당 작품 정보를 조회하여 반환하는 API
+    """
     parser_classes = [MultiPartParser]
 
-    # Mock 데이터: 임의로 저장한 5개의 작품 정보
-    MOCK_ARTWORKS = [
-        {
-            "artwork_id": 1,
-            "title": "Mona Lisa",
-            "artist": "Leonardo da Vinci",
-            "year": 1503,
-            "style": "Renaissance",
-            "description": "A portrait of a woman with a mysterious smile, considered a masterpiece of Renaissance art.",
-        },
-        {
-            "artwork_id": 2,
-            "title": "Starry Night",
-            "artist": "Vincent van Gogh",
-            "year": 1889,
-            "style": "Post-Impressionism",
-            "description": "A depiction of Van Gogh's view from the asylum, featuring swirling stars and a bright moon.",
-        },
-        {
-            "artwork_id": 3,
-            "title": "The Persistence of Memory",
-            "artist": "Salvador Dalí",
-            "year": 1931,
-            "style": "Surrealism",
-            "description": "This surreal painting features melting clocks draped over a barren landscape, symbolizing the fluidity of time.",
-        },
-        {
-            "artwork_id": 4,
-            "title": "The Scream",
-            "artist": "Edvard Munch",
-            "year": 1893,
-            "style": "Expressionism",
-            "description": "An iconic artwork capturing existential angst, with a figure screaming on a bridge under a blood-red sky.",
-        },
-        {
-            "artwork_id": 5,
-            "title": "The Birth of Venus",
-            "artist": "Sandro Botticelli",
-            "year": 1486,
-            "style": "Renaissance",
-            "description": "This masterpiece depicts the goddess Venus emerging from the sea on a shell, representing divine beauty and love.",
-        }
-    ]
-
-    def get(self, request):
-        # 1. Mock 데이터에서 랜덤으로 작품 선택
-        artwork = random.choice(self.MOCK_ARTWORKS)
-
-        # 2. 응답 데이터 반환
-        return Response({
-            "artwork_name": artwork["title"],
-            "artist": artwork["artist"]
-        }, status=status.HTTP_200_OK)
-
-@method_decorator(csrf_exempt, name='dispatch')
-class UploadArtworkView(APIView):
-        """
-        사용자로부터 이미지를 업로드받고 Mock 데이터를 반환하는 API.
-        """
-        parser_classes = [MultiPartParser]  # 이미지 업로드 처리를 위한 설정
-
-        # Mock 데이터: 임의로 저장한 5개의 작품 정보
-        MOCK_ARTWORKS = [
-        {
-            "artwork_id": 1,
-            "title": "Mona Lisa",
-            "artist": "Leonardo da Vinci",
-            "year": 1503,
-            "style": "Renaissance",
-            "description": "A portrait of a woman with a mysterious smile, considered a masterpiece of Renaissance art.",
-        },
-        {
-            "artwork_id": 2,
-            "title": "Starry Night",
-            "artist": "Vincent van Gogh",
-            "year": 1889,
-            "style": "Post-Impressionism",
-            "description": "A depiction of Van Gogh's view from the asylum, featuring swirling stars and a bright moon.",
-        },
-        {
-            "artwork_id": 3,
-            "title": "The Persistence of Memory",
-            "artist": "Salvador Dalí",
-            "year": 1931,
-            "style": "Surrealism",
-            "description": "This surreal painting features melting clocks draped over a barren landscape, symbolizing the fluidity of time.",
-        },
-        {
-            "artwork_id": 4,
-            "title": "The Scream",
-            "artist": "Edvard Munch",
-            "year": 1893,
-            "style": "Expressionism",
-            "description": "An iconic artwork capturing existential angst, with a figure screaming on a bridge under a blood-red sky.",
-        },
-        {
-            "artwork_id": 5,
-            "title": "The Birth of Venus",
-            "artist": "Sandro Botticelli",
-            "year": 1486,
-            "style": "Renaissance",
-            "description": "This masterpiece depicts the goddess Venus emerging from the sea on a shell, representing divine beauty and love.",
-        }
-        ]
-
-        def post(self, request):
-            # 1. 이미지 파일 검증
-            uploaded_image = request.FILES.get('image')
-            if not uploaded_image:
-                return Response({"error": "No image uploaded"}, status=status.HTTP_400_BAD_REQUEST)
-
-            # 2. Mock 데이터에서 랜덤으로 작품 선택
-            artwork = random.choice(self.MOCK_ARTWORKS)
-
-            # 3. 응답 데이터 반환 (이미지는 일단 무시)
-            return Response({
-                "message": "Mock data returned.",
-                "artwork_name": artwork["title"],
-                "artist": artwork["artist"],
-                "year": artwork["year"],
-                "style": artwork["style"],
-                "description": artwork["description"],  # 고정 설명 추가
-                "uploaded_filename": uploaded_image.name,  # 업로드된 파일 이름 반환 (테스트용)
-            }, status=status.HTTP_200_OK)
-
-"""
-class UploadArtworkView(APIView):
-    # 사용자로부터 이미지를 업로드받고, AI 모델에 전달하여 결과를 반환하는 API.
-    parser_classes = [MultiPartParser]  # 이미지 업로드 처리를 위한 설정
-
     def post(self, request):
-        # 1. 이미지 파일 검증
-        uploaded_image = request.FILES.get('image')
-        if not uploaded_image:
-            return Response({"error": "No image uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+        # 1. 업로드된 이미지 파일이 있는지 확인
+        uploaded_file = request.FILES.get('image')
+        if not uploaded_file:
+            return Response({"error": "No image uploaded."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2. AI 모델 호출
-        # 이 부분은 나중에 캐싱 로직 또는 여러 모델 호출 로직으로 확장 가능
-        ai_response = call_clip_model(uploaded_image)
-        if not ai_response:
-            return Response({"error": "AI model failed to process the image."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # 2. AppConfig에서 Faiss 인덱스, artwork_ids, CLIP 모델 및 전처리 객체를 가져옴
+        config = apps.get_app_config('artworks')
+        if config.faiss_index is None or config.artwork_ids is None:
+            return Response({"error": "Faiss index not loaded."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # 3. 응답 데이터 구성
-        # 나중에 작품 데이터베이스 연동이 필요할 경우, 여기서 DB에서 작품 정보를 가져와 추가 가능
-        response_data = {
-            "message": "Image processed successfully!",
-            "ai_response": ai_response,  # AI 모델에서 반환한 결과
-        }
+        model = config.clip_model
+        preprocess = config.clip_preprocess
+        device = config.device
+        index = config.faiss_index
+        artwork_ids = config.artwork_ids
 
-        return Response(response_data, status=status.HTTP_200_OK)
-"""
+        # 3. 업로드된 이미지를 PIL로 열고, RGB로 변환
+        try:
+            image = Image.open(BytesIO(uploaded_file.read())).convert("RGB")
+        except Exception as e:
+            return Response({"error": "Invalid image file."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4. CLIP 모델로 이미지 벡터화
+        image_input = preprocess(image).unsqueeze(0).to(device)
+        with torch.no_grad():
+            features = model.encode_image(image_input)
+        # 벡터 정규화 (코사인 유사도 계산을 위함)
+        features = features / features.norm(dim=-1, keepdim=True)
+        query_vector = features.cpu().numpy()
+
+        # 5. Faiss 인덱스 검색: 상위 1개의 결과 찾기
+        distances, indices = index.search(query_vector, 1)
+        best_idx = indices[0][0]
+        best_artwork_id = int(artwork_ids[best_idx])
+
+        # 6. DB에서 해당 artwork_id에 해당하는 작품 정보 조회
+        try:
+            artwork = Artwork.objects.get(id=best_artwork_id)
+            data = {
+                "artwork_id": artwork.id,
+                "artwork_name": artwork.title,  # 기존 mock data에서는 artwork_name 사용
+                "artist": artwork.artist,
+                "year": artwork.year,
+                # "style": artwork.style,  # 만약 style 필드가 있다면 추가
+                "description": artwork.description,
+            }
+        except Artwork.DoesNotExist:
+            data = {"error": f"Artwork with id {best_artwork_id} not found in DB."}
+
+        return Response(data, status=status.HTTP_200_OK)
