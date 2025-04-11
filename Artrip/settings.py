@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 import pinecone
 from dotenv import load_dotenv
+import torch.multiprocessing as mp
+mp.set_start_method("spawn", force=True)
 load_dotenv()
 
 SOCIAL_AUTH_KAKAO_KEY = os.getenv('KAKAO_REST_API_KEY')
@@ -50,6 +52,7 @@ INSTALLED_APPS = [
     'chat',
     'social_django',
     'accounts',
+    'reviews',
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -120,6 +123,9 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT'),
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+        },
     }
 }
 

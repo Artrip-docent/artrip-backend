@@ -38,15 +38,22 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+from django.urls import path, include
+
 urlpatterns = [
     path('', home),  # 루트 URL 처리
     path("admin/", admin.site.urls),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('auth/', include('accounts.urls')),
-    path('artworks/', include('artworks.urls')), # artworks 앱의 url 연결
-    path("api/chat/", include("chat.urls")),
-    # 🔹 Swagger URLs 추가
+
+    # 🔹 모든 API는 /api/ 아래로 통합
+    path('api/artworks/', include('artworks.urls')),
+    path('api/chat/', include('chat.urls')),
+    path('api/reviews/', include('reviews.urls')),
+
+    # 🔹 Swagger 및 Redoc
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
     path("swagger.json", schema_view.without_ui(cache_timeout=0), name="schema-json"),
 ]
+
