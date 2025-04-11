@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="66a90ea0-6d01-46f9-8ccf-74bd69f0d7a1" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/ArtripProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ArtripProject.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Artrip/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/Artrip/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/artworks/apps.py" beforeDir="false" afterPath="$PROJECT_DIR$/artworks/apps.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/artworks/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/artworks/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/artworks/models.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="feat/6" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="2uzXKfo2vdIlw1EJO1pSciIQnSZ" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feat/#6&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/uni/PycharmProjects/ArtripProject/indexes&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/indexes" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/Artrip" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-50da183f06c8-2887949eec09-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-233.13135.95" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="66a90ea0-6d01-46f9-8ccf-74bd69f0d7a1" name="Changes" comment="" />
+      <created>1743252313782</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1743252313782</updated>
+      <workItem from="1743252316156" duration="3063000" />
+      <workItem from="1743259333040" duration="3358000" />
+      <workItem from="1743262703771" duration="3534000" />
+      <workItem from="1743266489516" duration="488000" />
+      <workItem from="1743266985218" duration="4012000" />
+      <workItem from="1743316807835" duration="296000" />
+      <workItem from="1743682243240" duration="4599000" />
+      <workItem from="1743841552098" duration="2346000" />
+      <workItem from="1744014394781" duration="4896000" />
+      <workItem from="1744028876886" duration="753000" />
+      <workItem from="1744030672896" duration="1036000" />
+      <workItem from="1744179237604" duration="29000" />
+      <workItem from="1744183575385" duration="163000" />
+      <workItem from="1744376733043" duration="698000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
