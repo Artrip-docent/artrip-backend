@@ -59,11 +59,15 @@ class UploadArtworkView(APIView):
             artwork = Artwork.objects.get(id=best_artwork_id)
             data = {
                 "artwork_id": artwork.id,
-                "artwork_name": artwork.title,  # 기존 mock data에서는 artwork_name 사용
+                "title": artwork.title,             # 혹은 기존에 쓰던 "artwork_name"
                 "artist": artwork.artist,
                 "year": artwork.year,
-                # "style": artwork.style,  # 만약 style 필드가 있다면 추가
                 "description": artwork.description,
+                "style": artwork.style,
+                "mood": artwork.mood,
+                "technique": artwork.technique,
+                "image_url": artwork.image_url,
+                "created_at": artwork.created_at.isoformat(),
             }
         except Artwork.DoesNotExist:
             data = {"error": f"Artwork with id {best_artwork_id} not found in DB."}
