@@ -7,6 +7,11 @@ from django.apps import apps
 from io import BytesIO
 from PIL import Image
 import torch
+from .models import Artwork
+from .utils import extract_tags_from_gpt
+from collections import Counter
+from .serializers import ArtworkSerializer
+import random
 
 # Artwork 모델: DB의 작품 메타데이터에 대응
 from .models import Artwork
@@ -59,17 +64,54 @@ class UploadArtworkView(APIView):
             artwork = Artwork.objects.get(id=best_artwork_id)
             data = {
                 "artwork_id": artwork.id,
-                "title": artwork.title,             # 혹은 기존에 쓰던 "artwork_name"
+                "artwork_name": artwork.title,
                 "artist": artwork.artist,
                 "year": artwork.year,
                 "description": artwork.description,
-                "style": artwork.style,
-                "mood": artwork.mood,
-                "technique": artwork.technique,
-                "image_url": artwork.image_url,
-                "created_at": artwork.created_at.isoformat(),
             }
         except Artwork.DoesNotExist:
             data = {"error": f"Artwork with id {best_artwork_id} not found in DB."}
 
         return Response(data, status=status.HTTP_200_OK)
+
+# 사용자 취향을 누적 저장할 수 있는 임시 전역 딕셔너리
+user_preferences_store = {
+    # 예: "user1": {"style": Counter(...), "mood": Counter(...)}
+}
+class AnalyzePreferenceView(APIView):
+    def post(self, request):
+        print("✅ [ANALYZE] 요청 데이터:", request.data)
+        user_id = request.data.get("user_id", "default_user")
+        artwork_ids = request.data.get("artwork_ids", [])
+        if not artwork_ids:
+            return Response({"error": "작품 ID 목록이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        styles, moods = [], []
+
+        for artwork in Artwork.objects.filter(id__in=artwork_ids):
+            tags = extract_tags_from_gpt(artwork.title, artwork.description or "")
+            styles.extend(tags.get("style", []))
+            moods.extend(tags.get("mood", []))
+
+        # ✅ style + mood 통합 후 카운팅
+        combined_tags = styles + moods
+        tag_counter = Counter(combined_tags)
+        top_tags = tag_counter.most_common(5)
+
+        print("🎨 상위 5개 통합 태그:", top_tags)
+
+        return Response({
+            "top_tags": [tag for tag, _ in top_tags]  # 문자열 리스트로만 반환
+        }, status=status.HTTP_200_OK)
+
+class RandomArtworksView(APIView): # 랜덤 작품 뷰 추가
+    def get(self, request):
+        artworks = list(Artwork.objects.all())
+        random_artworks = random.sample(artworks, min(len(artworks), 4))  # 최대 4개 랜덤
+        serializer = ArtworkSerializer(random_artworks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
