@@ -43,6 +43,7 @@ from django.urls import path, include
 urlpatterns = [
     path('', home),  # 루트 URL 처리
     path("admin/", admin.site.urls),
+    path("artworks/", include("artworks.urls")),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('auth/', include('accounts.urls')),
 
