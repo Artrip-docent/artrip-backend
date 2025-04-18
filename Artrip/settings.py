@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'social_django',
     'accounts',
     'reviews',
+    'exhibition',
 ]
 
 AUTHENTICATION_BACKENDS = (

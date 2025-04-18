@@ -57,7 +57,7 @@ message_param = openapi.Schema(
     type=openapi.TYPE_OBJECT,
     properties={
         "message": openapi.Schema(type=openapi.TYPE_STRING, description="User message"),
-        "exhibition_id": openapi.Schema(type=openapi.TYPE_INTEGER, description="Exhibition ID (optional)"),
+        "exhibition_id": openapi.Schema(type=openapi.TYPE_INTEGER, description="exhibition ID (optional)"),
     },
     required=["message"],  # exhibition_id는 선택 사항이면 required에 넣지 않음
 )
@@ -138,7 +138,7 @@ def chat_view(request):
                 })
                 # ✅ Pinecone에서 검색된 문서 확인
                 search_results = retriever.invoke(user_message)
-                print(f"🔍 Exhibition {exhibition_id}에 대한 검색 결과:")
+                print(f"🔍 exhibition {exhibition_id}에 대한 검색 결과:")
                 for doc in search_results:
                     print(doc.metadata)  # ✅ 메타데이터 확인
                     print(doc.page_content)  # ✅ 저장된 텍스트 확인
@@ -255,7 +255,7 @@ def admin_page(request):
         "gallery_form": gallery_form,
         "exhibition_form": exhibition_form,
         "document_form": document_form,
-        "exhibitions": exhibitions,
+        "exhibition": exhibitions,
         "documents": documents,
         "galleries": galleries,
     }
