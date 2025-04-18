@@ -7,7 +7,7 @@ class Gallery(models.Model):
         return self.name
 
 class Exhibition(models.Model):
-    gallery = models.ForeignKey(Gallery, on_delete=models.CASCADE, related_name='exhibitions')
+    gallery = models.ForeignKey(Gallery, on_delete=models.CASCADE, related_name='exhibition')
     title = models.CharField(max_length=200)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
