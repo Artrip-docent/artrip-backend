@@ -26,12 +26,18 @@ def call_clip_model(image):
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def extract_tags_from_gpt(title, description):
+    # 설명이 비어 있거나 None인 경우를 처리
+    if not description or description.strip() == "":
+        description_text = "설명이 제공되지 않았어. 제목만 참고해서 일반적인 사조와 분위기를 예측해줘."
+    else:
+        description_text = description
+
     prompt = f"""
 다음 작품의 제목과 설명을 참고하여, 사조(style)와 분위기(mood) 태그를 추출해줘.
 모르면 최대한 일반적인 추측을 해도 돼.
 
 제목: {title}
-설명: {description}
+설명: {description_text}
 
 아래와 같은 JSON 형식으로 응답해줘:
 {{
@@ -46,9 +52,8 @@ def extract_tags_from_gpt(title, description):
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
         )
-
         message = response.choices[0].message.content
-        tags = json.loads(message)  # GPT 응답을 JSON으로 파싱
+        tags = json.loads(message)
         return tags
 
     except Exception as e:
