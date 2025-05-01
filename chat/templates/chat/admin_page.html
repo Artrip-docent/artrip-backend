@@ -60,6 +60,7 @@
       <!-- 전시회 추가 폼 -->
       <form method="post">
         {% csrf_token %}
+        <input id="exhibition-form" type="text" />
         <label for="exhibition-form">새 전시회 추가</label>
         <hr />
         {{ exhibition_form.gallery.label_tag }}<br />
@@ -131,7 +132,6 @@
           <li>
             {{ doc.exhibition.title }} ({{ doc.exhibition.gallery.name }}) - {{ doc.created_at|date:"Y-m-d" }}
             <br />
-            <pre>{{ doc.content }}</pre>
           </li>
         {% empty %}
           <li>문서가 없습니다.</li>

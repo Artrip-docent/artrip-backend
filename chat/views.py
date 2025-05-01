@@ -241,21 +241,39 @@ def admin_page(request):
                 doc_instance.content = content
                 doc_instance.save()
 
-                # ✅ Pinecone 벡터 DB 추가
                 add_to_vector_db(doc_instance, content)
-
                 messages.success(request, "문서가 성공적으로 업로드되었습니다.")
                 return redirect("admin_page")
 
-    exhibitions = Exhibition.objects.all().order_by("-id")
-    documents = Document.objects.all().order_by("-created_at")
+        elif "submit_gallery" in request.POST:
+            gallery_form = GalleryForm(request.POST, prefix="gal")
+            if gallery_form.is_valid():
+                gallery_form.save()
+                messages.success(request, "갤러리가 추가되었습니다.")
+                return redirect("admin_page")
+            else:
+                messages.error(request, "갤러리 추가에 실패했습니다.")
+                print("📛 Gallery form errors:", gallery_form.errors)
+
+        elif "submit_exhibition" in request.POST:
+            exhibition_form = ExhibitionForm(request.POST, prefix="exh")
+            if exhibition_form.is_valid():
+                exhibition_form.save()
+                messages.success(request, "전시회가 추가되었습니다.")
+                return redirect("admin_page")
+            else:
+                messages.error(request, "전시회 추가에 실패했습니다.")
+                print("📛 Exhibition form errors:", exhibition_form.errors)
+
+    exhibitions = Exhibition.objects.select_related("gallery").all().order_by("-id")
+    documents = Document.objects.select_related("exhibition", "exhibition__gallery").all().order_by("-created_at")
     galleries = Gallery.objects.all()
 
     context = {
         "gallery_form": gallery_form,
         "exhibition_form": exhibition_form,
         "document_form": document_form,
-        "exhibition": exhibitions,
+        "exhibitions": exhibitions,
         "documents": documents,
         "galleries": galleries,
     }
