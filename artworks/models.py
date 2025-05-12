@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import User
+from exhibition.models import Exhibition
 
 class Artwork(models.Model):  # ✅ 이 부분이 파일 최상단에 있어야 함
     id = models.IntegerField(primary_key=True)  # 인덱스 파일과 일치하는 id
@@ -14,3 +16,24 @@ class Artwork(models.Model):  # ✅ 이 부분이 파일 최상단에 있어야 
 
     def __str__(self):
         return self.title
+
+class ViewingHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    exhibition = models.ForeignKey(Exhibition, on_delete=models.CASCADE)
+    artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE)
+    view_time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.artwork.title} ({self.exhibition.title})"
+
+
+class ChatHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE)
+    exhibition = models.ForeignKey(Exhibition, on_delete=models.CASCADE)
+    content = models.TextField()
+    is_fixed = models.BooleanField(default=False)  # 고정 설명인지 질의응답인지 구분
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.artwork.title}: {'고정설명' if self.is_fixed else '질의응답'}"
