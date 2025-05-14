@@ -126,17 +126,22 @@
     </div>
 
     <div class="container">
-      <h2>등록된 문서</h2>
-      <ul>
-        {% for doc in documents %}
-          <li>
-            {{ doc.exhibition.title }} ({{ doc.exhibition.gallery.name }}) - {{ doc.created_at|date:"Y-m-d" }}
-            <br />
-          </li>
-        {% empty %}
-          <li>문서가 없습니다.</li>
-        {% endfor %}
-      </ul>
+  <h2>등록된 문서</h2>
+  <ul>
+    {% for doc in documents %}
+      <li>
+        {{ doc.exhibition.title }} ({{ doc.exhibition.gallery.name }}) - {{ doc.created_at|date:"Y-m-d" }}
+        <form method="post" action="{% url 'delete_document' doc.id %}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+            {% csrf_token %}
+            <button type="submit" style="background: none; border: none; color: red; cursor: pointer;">
+            ❌
+             </button>
+        </form>
+      </li>
+    {% empty %}
+      <li>문서가 없습니다.</li>
+    {% endfor %}
+  </ul>
     </div>
 
     <script>

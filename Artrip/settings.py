@@ -15,6 +15,8 @@ import os
 import pinecone
 from dotenv import load_dotenv
 import torch.multiprocessing as mp
+from pymongo import MongoClient
+
 mp.set_start_method("spawn", force=True)
 load_dotenv()
 
@@ -49,7 +51,8 @@ INSTALLED_APPS = [
     "rest_framework",
     'drf_yasg',  # Swagger 지원 패키지
     "corsheaders",
-    'chat',
+    # 'chat',
+    'chat.apps.ChatConfig',
     'social_django',
     'accounts',
     'reviews',
@@ -177,3 +180,7 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_ENV = os.getenv("PINECONE_ENV")
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+MONGODB_URI = os.getenv("MONGODB_URI")
+MONGODB_DB = os.getenv("MONGODB_DB")
+MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION")
