@@ -5,6 +5,8 @@ from .forms import ExhibitionForm, DocumentForm, GalleryForm
 from django.http import JsonResponse
 from django.http import StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
+from django.shortcuts import get_object_or_404
 import openai
 import json
 from django.conf import settings
@@ -278,3 +280,25 @@ def admin_page(request):
         "galleries": galleries,
     }
     return render(request, "chat/admin_page.html", context)
+
+
+@csrf_protect
+def delete_document(request, doc_id):
+    if request.method == "POST":
+        doc = get_object_or_404(Document, pk=doc_id)
+
+        # 1. Pinecone 벡터 삭제
+        vector_id = f"doc_{doc.id}"
+        try:
+            pinecone_index.delete(ids=[vector_id])
+            print(f"🗑️ Pinecone에서 {vector_id} 삭제 완료")
+        except Exception as e:
+            print(f"⚠️ Pinecone 삭제 실패: {e}")
+
+        # 2. RDB에서 문서 삭제
+        doc.delete()
+        messages.success(request, "문서가 성공적으로 삭제되었습니다.")
+    else:
+        messages.error(request, "잘못된 요청입니다.")
+
+    return redirect("admin_page")
