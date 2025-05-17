@@ -69,6 +69,7 @@ class UploadArtworkView(APIView):
                 "year": artwork.year,
                 "description": artwork.description,
             }
+            print(artwork.description)
         except Artwork.DoesNotExist:
             data = {"error": f"Artwork with id {best_artwork_id} not found in DB."}
 

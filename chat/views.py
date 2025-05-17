@@ -27,6 +27,7 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.base import BaseCallbackHandler
 from pinecone import Pinecone, ServerlessSpec  # Pinecone 클라이언트용
 from langchain_pinecone import PineconeVectorStore  # LangChain VectorStore용
+from chat.mongo_utils import save_chat_log, get_mongo_collection
 
 # OpenAI Embeddings를 사용하여 벡터스토어 구축 (한 번만 초기화하는 것이 좋습니다)
 embeddings = OpenAIEmbeddings(openai_api_key=settings.OPENAI_API_KEY)
@@ -89,7 +90,10 @@ def chat_view(request):
         data = json.loads(request.body)
         user_message = data.get("message", "")
         exhibition_id = data.get("exhibition_id")  # 전시회 ID
-
+        # user_id = request.user.id if request.user.is_authenticated else None
+        # artwork_id = data.get("artwork_id")
+        user_id = 1
+        artwork_id = 1
         if not user_message:
             return StreamingHttpResponse(
                 "data: {\"error\": \"Message cannot be empty\"}\n\n",
@@ -99,11 +103,14 @@ def chat_view(request):
 
         def event_stream(user_message):
             token_queue = queue.Queue()
+            full_response = ""
 
             # 콜백 핸들러: 토큰이 생성될 때마다 token_queue로 전달
             class SSECallbackHandler(BaseCallbackHandler):
                 def on_llm_new_token(self, token: str, **kwargs) -> None:
                     token_queue.put(token)
+                    nonlocal full_response
+                    full_response = full_response + token #전체 응답
 
             callback_handler = SSECallbackHandler()
             callback_manager = CallbackManager([callback_handler])
@@ -186,6 +193,8 @@ def chat_view(request):
                 yield f"data: {token}\n\n"
             thread.join()
 
+            save_chat_log(user_id=user_id, artwork_id=artwork_id, user_message=user_message, response_text=full_response, exhibition_id=exhibition_id)
+
         response = StreamingHttpResponse(event_stream(user_message), content_type="text/event-stream")
         response["Cache-Control"] = "no-cache"
         return response
@@ -196,6 +205,24 @@ def chat_view(request):
             content_type="text/event-stream",
             status=500
         )
+
+@api_view(["GET"])
+def get_chat_history(request):
+    user_id = request.GET.get("user_id")
+    artwork_id = request.GET.get("artwork_id")
+    exhibition_id = request.GET.get("exhibition_id")
+
+    if not user_id or not artwork_id or not exhibition_id:
+        return Response({"error": "user_id, artwork_id, exhibition_id 모두 필요합니다."}, status=400)
+
+    collection = get_mongo_collection()
+    doc = collection.find_one({"user_id": int(user_id), "artwork_id": int(artwork_id), "exhibition_id": int(exhibition_id)})
+
+    if not doc or "history" not in doc:
+        return Response([])
+
+    return Response(doc["history"])
+
 
 def vectorize_text(text):
     # 실제 문장 임베딩 모델을 사용하여 임베딩 벡터를 생성하는 코드로 대체하세요.
@@ -212,7 +239,7 @@ def add_to_vector_db(document, content):
     vector_id = f"doc_{document.id}"
     # 메타데이터에 전시회 id와 원문 텍스트를 포함 (필터링에 사용)
     metadata = {
-        "exhibition_id": str(document.exhibition.id),
+        "exhibition_id": (document.exhibition.id),
         "text": content,
     }
     # ✅ 디버깅: 저장할 데이터 출력
@@ -302,3 +329,5 @@ def delete_document(request, doc_id):
         messages.error(request, "잘못된 요청입니다.")
 
     return redirect("admin_page")
+
+
