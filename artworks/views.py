@@ -12,6 +12,7 @@ from .utils import extract_tags_from_gpt
 from collections import Counter
 from .serializers import ArtworkSerializer
 import random
+from chat.mongo_utils import save_info
 
 # Artwork 모델: DB의 작품 메타데이터에 대응
 from .models import Artwork
@@ -69,9 +70,29 @@ class UploadArtworkView(APIView):
                 "year": artwork.year,
                 "description": artwork.description,
             }
-            print(artwork.description)
+            user_id = request.user.id if request.user.is_authenticated else 1
+            exhibition_id = request.data.get("exhibition_id", 1)
+            initial_message = f"""
+                        🎨 작품 정보 🎨
+                        제목: {artwork.title}
+                        작가: {artwork.artist}
+                        연도: {artwork.year}
+
+                        📝 설명:
+                        {artwork.description}
+                        """.strip()
+
+            save_info(user_id=user_id, exhibition_id=exhibition_id, artwork_id=artwork.id,
+                    info_text=initial_message)
+
         except Artwork.DoesNotExist:
             data = {"error": f"Artwork with id {best_artwork_id} not found in DB."}
+            print("[ERROR]id 없음...")
+            initial_message = "기본 정보 없음 (id not found)"
+            user_id = request.user.id if request.user.is_authenticated else 1
+            exhibition_id = request.data.get("exhibition_id", 1)
+            save_info(user_id=user_id, exhibition_id=exhibition_id, artwork_id=1,
+                      info_text=initial_message)
 
         return Response(data, status=status.HTTP_200_OK)
 
