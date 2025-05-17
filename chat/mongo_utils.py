@@ -36,3 +36,33 @@ def save_chat_log(user_message, response_text, user_id=None, exhibition_id=None,
         },
         upsert=True
     )
+
+
+def save_info(info_text, user_id=None, exhibition_id=None, artwork_id=None):
+    collection = get_mongo_collection()
+
+    filter_query = {
+        "user_id": int(user_id),
+        "artwork_id": int(artwork_id),
+        "exhibition_id": int(exhibition_id),
+    }
+
+    existing_doc = collection.find_one(filter_query)
+
+    if existing_doc:
+        collection.update_one(
+            filter_query,
+            {"$set": {
+                "information": info_text,
+                "time": datetime.utcnow()
+            }}
+        )
+    else:
+        collection.insert_one({
+            "user_id": int(user_id),
+            "artwork_id": int(artwork_id),
+            "exhibition_id": int(exhibition_id),
+            "information": info_text,
+            "history": [],
+            "time": datetime.utcnow()
+        })
