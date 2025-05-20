@@ -7,14 +7,12 @@ from django.apps import apps
 from io import BytesIO
 from PIL import Image
 import torch
-from .models import Artwork
 from .utils import extract_tags_from_gpt
 from collections import Counter
 from .serializers import ArtworkSerializer
 import random
 from chat.mongo_utils import save_info
-
-# Artwork 모델: DB의 작품 메타데이터에 대응
+from .models import ViewingHistory
 from .models import Artwork
 
 class UploadArtworkView(APIView):
@@ -29,6 +27,14 @@ class UploadArtworkView(APIView):
         uploaded_file = request.FILES.get('image')
         if not uploaded_file:
             return Response({"error": "No image uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        """
+            관람 이력에 사용자 아이디, 전시회 아이디 기록
+        """
+        exhibition_id = request.data.get('exhibition_id')
+        user_id = request.data.get('user_id')
+        if not exhibition_id or not user_id:
+            return Response({"error": "exhibition_id와 user_id가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 2. AppConfig에서 Faiss 인덱스, artwork_ids, CLIP 모델 및 전처리 객체를 가져옴
         config = apps.get_app_config('artworks')
@@ -70,8 +76,14 @@ class UploadArtworkView(APIView):
                 "year": artwork.year,
                 "description": artwork.description,
             }
-            user_id = request.user.id if request.user.is_authenticated else 1
-            exhibition_id = request.data.get("exhibition_id", 1)
+
+            # 관람이력 (-> MySQL)
+            ViewingHistory.objects.create(
+                user_id=user_id,
+                exhibition_id=exhibition_id,
+                artwork=artwork
+            )
+
             initial_message = f"""
                         🎨 작품 정보 🎨
                         제목: {artwork.title}
@@ -81,18 +93,14 @@ class UploadArtworkView(APIView):
                         📝 설명:
                         {artwork.description}
                         """.strip()
-
-            save_info(user_id=user_id, exhibition_id=exhibition_id, artwork_id=artwork.id,
-                    info_text=initial_message)
+            save_info(user_id=user_id, exhibition_id=exhibition_id,
+                      artwork_id=artwork.id, info_text=initial_message)
 
         except Artwork.DoesNotExist:
+            # ✅ artwork 없음 처리
             data = {"error": f"Artwork with id {best_artwork_id} not found in DB."}
-            print("[ERROR]id 없음...")
-            initial_message = "기본 정보 없음 (id not found)"
-            user_id = request.user.id if request.user.is_authenticated else 1
-            exhibition_id = request.data.get("exhibition_id", 1)
-            save_info(user_id=user_id, exhibition_id=exhibition_id, artwork_id=1,
-                      info_text=initial_message)
+            save_info(user_id=user_id, exhibition_id=exhibition_id,
+                      artwork_id=1, info_text="기본 정보 없음 (id not found)")
 
         return Response(data, status=status.HTTP_200_OK)
 
