@@ -1,7 +1,7 @@
 # reviews/models.py
 
 from django.db import models
-from chat.models import Exhibition
+from exhibition.models import Exhibition
 from django.contrib.auth.models import User
 
 class Review(models.Model):
