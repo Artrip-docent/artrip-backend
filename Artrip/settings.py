@@ -20,7 +20,9 @@ from pymongo import MongoClient
 mp.set_start_method("spawn", force=True)
 load_dotenv()
 
-SOCIAL_AUTH_KAKAO_KEY = os.getenv('KAKAO_REST_API_KEY')
+SOCIAL_AUTH_KAKAO_KEY = os.environ.get('SOCIAL_AUTH_KAKAO_KEY')
+SOCIAL_AUTH_KAKAO_SECRET = os.environ.get('SOCIAL_AUTH_KAKAO_SECRET', '')
+SOCIAL_AUTH_KAKAO_REDIRECT_URI = os.environ.get('SOCIAL_AUTH_KAKAO_REDIRECT_URI')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -61,11 +63,9 @@ INSTALLED_APPS = [
 
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.kakao.KakaoOAuth2',
+    'accounts.backend.authentication.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
-
-# 카카오 설정
-SOCIAL_AUTH_KAKAO_REDIRECT_URI = 'http://localhost:8000/oauth/complete/kakao/'
 
 # 로그인 성공/실패 리디렉션
 LOGIN_REDIRECT_URL = '/'
@@ -184,3 +184,5 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MONGODB_URI = os.getenv("MONGODB_URI")
 MONGODB_DB = os.getenv("MONGODB_DB")
 MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION")
+
+AUTH_USER_MODEL = 'accounts.CustomUser'

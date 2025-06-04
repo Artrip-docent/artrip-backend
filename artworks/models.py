@@ -1,6 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
 from exhibition.models import Exhibition
+from django.conf import settings
 
 class Artwork(models.Model):  # ✅ 이 부분이 파일 최상단에 있어야 함
     id = models.IntegerField(primary_key=True)  # 인덱스 파일과 일치하는 id
@@ -18,7 +18,7 @@ class Artwork(models.Model):  # ✅ 이 부분이 파일 최상단에 있어야 
         return self.title
 
 class ViewingHistory(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     exhibition = models.ForeignKey(Exhibition, on_delete=models.CASCADE)
     artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE)
     view_time = models.DateTimeField(auto_now_add=True)
@@ -28,7 +28,7 @@ class ViewingHistory(models.Model):
 
 
 class ChatHistory(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE)
     exhibition = models.ForeignKey(Exhibition, on_delete=models.CASCADE)
     content = models.TextField()

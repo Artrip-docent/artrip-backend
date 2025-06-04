@@ -1,20 +1,45 @@
-# accounts/views.py
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenRefreshView
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 from Artrip.utils.token import get_tokens_for_user
-from .models import UserProfile
+from .serializers import RegisterSerializer, LoginSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
-# 1. 카카오 로그인 후 토큰 발급
-@api_view(['GET'])
+User = get_user_model()
+
+# ✅ 카카오 로그인 및 토큰 발급
+@api_view(['POST'])
 @permission_classes([AllowAny])
-@login_required
 def kakao_token_view(request):
-    user = request.user
+    kakao_data = request.data  # {'email': ..., 'nickname': ..., 'profile_image': ...}
+
+    # email = kakao_data.get('email') # 이메일은 현재 받을 수 없는 상태
+    nickname = kakao_data.get('nickname') or '여행자'
+    profile_image = kakao_data.get('profile_image') or 'https://ui-avatars.com/api/?name=Guest&background=random&color=ffffff'
+
+    # 임시로 이메일 대신 username을 랜덤 문자열로 생성 (혹은 카카오 ID 등을 써도 됨)
+    import uuid
+    temp_username = f"kakao_{uuid.uuid4().hex[:10]}"
+
+    user, created = User.objects.get_or_create(username=temp_username, defaults={
+        'nickname': nickname,
+        'profile_image': profile_image,
+    })
+
+    if not created:
+        updated = False
+        if not user.nickname and nickname:
+            user.nickname = nickname
+            updated = True
+        if not user.profile_image and profile_image:
+            user.profile_image = profile_image
+            updated = True
+        if updated:
+            user.save()
+
     tokens = get_tokens_for_user(user)
     return Response({
         'message': '카카오 로그인 성공',
@@ -22,51 +47,76 @@ def kakao_token_view(request):
         'refresh': tokens['refresh'],
     })
 
-# 2. 사용자 정보 반환 API
+
+# ✅ 유저 정보 조회
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_info_view(request):
     user = request.user
-    profile = getattr(user, 'userprofile', None)
     return Response({
         'email': user.email,
-        'name': profile.name if profile else '',
-        'gender': profile.gender if profile else '',
+        'nickname': user.nickname,
+        'profile_image': user.profile_image,
     })
 
-# 3. 추가 프로필 입력 여부 확인 API
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def need_profile_view(request):
-    user = request.user
-    need_profile = not hasattr(user, 'userprofile')
-    return Response({
-        'need_profile': need_profile
-    })
 
-# 4. 추가정보 등록 API
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def register_profile_view(request):
-    user = request.user
-
-    if hasattr(user, 'userprofile'):
-        return Response({'message': '이미 프로필이 등록되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    name = request.data.get('name')
-    gender = request.data.get('gender')
-
-    if not name or not gender:
-        return Response({'message': '이름과 성별은 필수입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    profile = UserProfile.objects.create(user=user, name=name, gender=gender)
-    return Response({'message': '프로필 등록 완료'})
-
-# 5. Refresh 토큰으로 Access 재발급 API
+# ✅ 리프레시 토큰으로 액세스 토큰 재발급
 class CustomTokenRefreshView(TokenRefreshView):
-    """
-    POST /auth/token/refresh/
-    Body: { "refresh": "<your_refresh_token>" }
-    → Response: { "access": "<new_access_token>" }
-    """
     permission_classes = [AllowAny]
+
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_view(request):
+    serializer = RegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        tokens = get_tokens_for_user(user)
+        return Response({
+            'message': '회원가입 성공',
+            'access': tokens['access'],
+            'refresh': tokens['refresh'],
+        }, status=201)
+    return Response(serializer.errors, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_view(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.validated_data
+        tokens = get_tokens_for_user(user)
+        return Response({
+            'message': '로그인 성공',
+            'access': tokens['access'],
+            'refresh': tokens['refresh'],
+        })
+    return Response(serializer.errors, status=400)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_nickname_view(request):
+    new_nickname = request.data.get('nickname')
+    if not new_nickname:
+        return Response({'error': '닉네임을 입력해주세요.'}, status=400)
+
+    user = request.user
+    user.nickname = new_nickname
+    user.save()
+    return Response({'message': '닉네임이 변경되었습니다.', 'nickname': user.nickname})
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_profile_image_view(request):
+    new_image_url = request.data.get('profile_image')
+    if not new_image_url:
+        return Response({'error': '프로필 이미지 URL을 입력해주세요.'}, status=400)
+
+    user = request.user
+    user.profile_image = new_image_url
+    user.save()
+    return Response({'message': '프로필 이미지가 변경되었습니다.', 'profile_image': user.profile_image})

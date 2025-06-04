@@ -2,6 +2,9 @@ from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError
 from .models import Review, Exhibition
 from .serializers import ReviewSerializer
+from django.contrib.auth import get_user_model
+
+User = get_user_model()  # ✅ 커스텀 유저 모델 적용
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
@@ -24,7 +27,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         except Exhibition.DoesNotExist:
             raise ValidationError("Exhibition not found")
 
-        from django.contrib.auth.models import User
+        # ✅ 임시 테스트 코드: id=1 유저
         author = User.objects.get(id=1)
 
         serializer.save(author=author, exhibition=exhibition)
