@@ -46,6 +46,7 @@ urlpatterns = [
     path("artworks/", include("artworks.urls")),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('auth/', include('accounts.urls')),
+    path('exhibition/', include('exhibition.urls')),
 
     # 🔹 모든 API는 /api/ 아래로 통합
     path('api/artworks/', include('artworks.urls')),
