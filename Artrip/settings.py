@@ -186,3 +186,6 @@ MONGODB_DB = os.getenv("MONGODB_DB")
 MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION")
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

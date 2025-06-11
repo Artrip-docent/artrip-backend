@@ -15,11 +15,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
 from django.http import HttpResponse
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.conf import settings
+from django.conf.urls.static import static
 
 # 루트 URL에 간단한 메시지 반환
 def home(request):
@@ -47,6 +48,7 @@ urlpatterns = [
     path('oauth/', include('social_django.urls', namespace='social')),
     path('auth/', include('accounts.urls')),
 
+
     # 🔹 모든 API는 /api/ 아래로 통합
     path('api/artworks/', include('artworks.urls')),
     path('api/chat/', include('chat.urls')),
@@ -60,3 +62,5 @@ urlpatterns = [
     path('api/exhibition/', include('exhibition.urls')),
 ]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
