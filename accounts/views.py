@@ -106,6 +106,7 @@ def login_view(request):
             'message': '로그인 성공',
             'access': tokens['access'],
             'refresh': tokens['refresh'],
+            'user_id': user.id
         })
     return Response(serializer.errors, status=400)
 
