@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 import json
-from django.db.models import Case, When, Value, IntegerField
+from django.db.models import Case, When, Value, IntegerField, Q
 
 from .models import Exhibition
 
@@ -64,6 +64,28 @@ def exhibition_list_sorted_for_user(request):
         for e in exhibitions
     ]
     return JsonResponse(data, safe=False)
+
+# 전시회 검색(제목 기준) api (-> 하단 왼쪽 탭, 가운데 탭에 연동)
+def search_exhibitions(request):
+    query = request.GET.get('q', '')
+
+    # 전시회 제목에서 검색어가 포함된 항목 찾기
+    exhibitions = Exhibition.objects.filter(Q(title__icontains=query)).distinct()
+
+    # JSON 형태로 응답
+    data = [
+        {
+            'id': exhibition.id,
+            'title': exhibition.title,
+            'start_date': exhibition.start_date,
+            'end_date': exhibition.end_date,
+            'location': exhibition.location,
+            'image_url': exhibition.image_url,
+        }
+        for exhibition in exhibitions
+    ]
+
+    return JsonResponse({'results': data}, status=200)
 
 def exhibition_list(request):
     exhibitions = Exhibition.objects.all().values(
