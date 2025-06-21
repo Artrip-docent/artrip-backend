@@ -27,7 +27,7 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.base import BaseCallbackHandler
 from pinecone import Pinecone, ServerlessSpec  # Pinecone 클라이언트용
 from langchain_pinecone import PineconeVectorStore  # LangChain VectorStore용
-from chat.mongo_utils import save_chat_log, get_mongo_collection
+from chat.mongo_utils import save_chat_log, get_mongo_collection, get_context
 
 # OpenAI Embeddings를 사용하여 벡터스토어 구축 (한 번만 초기화하는 것이 좋습니다)
 embeddings = OpenAIEmbeddings(openai_api_key=settings.OPENAI_API_KEY)
@@ -90,10 +90,8 @@ def chat_view(request):
         data = json.loads(request.body)
         user_message = data.get("message", "")
         exhibition_id = data.get("exhibition_id")  # 전시회 ID
-        # user_id = request.user.id if request.user.is_authenticated else None
-        # artwork_id = data.get("artwork_id")
-        user_id = 1
-        artwork_id = 1
+        user_id = data.get("user_id")
+        artwork_id = data.get("artwork_id")
         if not user_message:
             return StreamingHttpResponse(
                 "data: {\"error\": \"Message cannot be empty\"}\n\n",

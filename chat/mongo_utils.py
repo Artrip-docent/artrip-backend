@@ -66,3 +66,18 @@ def save_info(info_text, user_id=None, exhibition_id=None, artwork_id=None):
             "history": [],
             "time": datetime.utcnow()
         })
+
+def get_context(user_id=None, exhibition_id=None, artwork_id=None):
+    collection = get_mongo_collection()
+
+    query = {
+        "user_id": user_id,
+        "exhibition_id": exhibition_id,
+        "artwork_id": artwork_id
+    }
+
+    doc = collection.find_one(query)
+    if not doc or "history" not in doc:
+        return []
+
+    return doc["history"]
