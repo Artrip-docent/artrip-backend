@@ -9,12 +9,13 @@ from PIL import Image
 import torch
 from .utils import extract_tags_from_gpt
 from collections import Counter
-from .serializers import ArtworkSerializer
+from .serializers import ArtworkSerializer, ViewingHistorySerializer
 import random
 from chat.mongo_utils import save_info
 from .models import ViewingHistory
 from .models import Artwork
-
+from exhibition.models import Exhibition
+from exhibition.serializers import ExhibitionSerializer
 class UploadArtworkView(APIView):
     """
     사용자가 업로드한 이미지 CLIP으로 벡터화하고
@@ -142,6 +143,25 @@ class RandomArtworksView(APIView): # 랜덤 작품 뷰 추가
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class UserViewedExhibitionsAPIView(APIView):
+    def get(self, request, user_id):
+        exhibition_ids = (ViewingHistory.objects
+                          .filter(user_id=user_id)
+                          .values_list('exhibition_id', flat=True)
+                          .distinct())
 
+        exhibitions = Exhibition.objects.filter(id__in=exhibition_ids)
+        serializer = ExhibitionSerializer(exhibitions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+# 2. 특정 전시에서 감상한 작품 리스트
+class UserArtworksInExhibitionAPIView(APIView):
+    def get(self, request, user_id, exhibition_id):
+        artworks = ViewingHistory.objects.filter(
+            user_id=user_id,
+            exhibition_id=exhibition_id
+        ).order_by('-view_time')
+        serializer = ViewingHistorySerializer(artworks, many=True)
+        return Response(serializer.data)
 
 

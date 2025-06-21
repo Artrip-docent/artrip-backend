@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import UploadArtworkView
-from .views import UploadArtworkView, AnalyzePreferenceView
+from .views import UploadArtworkView, UserArtworksInExhibitionAPIView
+from .views import UploadArtworkView, AnalyzePreferenceView, UserViewedExhibitionsAPIView
 from .views import UploadArtworkView, RandomArtworksView
 
 
@@ -11,6 +11,6 @@ urlpatterns = [
     path("analyze-preference/", AnalyzePreferenceView.as_view(), name="analyze-preference"),
 
     path("random/", RandomArtworksView.as_view(), name="random-artworks"),
-
-
+    path('viewinghistory/<int:user_id>/', UserViewedExhibitionsAPIView.as_view(), name='viewing-history'),
+    path('viewinghistory/<int:user_id>/<int:exhibition_id>/', UserArtworksInExhibitionAPIView.as_view()),
 ]
