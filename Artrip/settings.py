@@ -16,7 +16,10 @@ import pinecone
 from dotenv import load_dotenv
 import torch.multiprocessing as mp
 from pymongo import MongoClient
-
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # 액세스 토큰 만료 시간을 30분으로 설정
+}
 mp.set_start_method("spawn", force=True)
 load_dotenv()
 

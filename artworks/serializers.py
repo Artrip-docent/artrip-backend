@@ -11,3 +11,8 @@ class ViewingHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ViewingHistory
         fields = '__all__'
+
+class ViewedArtworkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Artwork
+        fields = ['id', 'title', 'artist', 'image_url']

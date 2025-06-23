@@ -9,13 +9,14 @@ from PIL import Image
 import torch
 from .utils import extract_tags_from_gpt
 from collections import Counter
-from .serializers import ArtworkSerializer, ViewingHistorySerializer
+from .serializers import ArtworkSerializer, ViewedArtworkSerializer
 import random
 from chat.mongo_utils import save_info
 from .models import ViewingHistory
 from .models import Artwork
 from exhibition.models import Exhibition
 from exhibition.serializers import ExhibitionSerializer
+import textwrap
 class UploadArtworkView(APIView):
     """
     사용자가 업로드한 이미지 CLIP으로 벡터화하고
@@ -94,14 +95,24 @@ class UploadArtworkView(APIView):
                         📝 설명:
                         {artwork.description}
                         """.strip()
+
             save_info(user_id=user_id, exhibition_id=exhibition_id,
                       artwork_id=artwork.id, info_text=initial_message)
 
         except Artwork.DoesNotExist:
             # ✅ artwork 없음 처리
             data = {"error": f"Artwork with id {best_artwork_id} not found in DB."}
+            info_text = """
+                🎨 작품 정보 🎨
+                제목: 제목 없음
+                작가: 작가 정보 없음
+                연도: 연도 정보 없음
+                
+                📝 설명:
+                설명을 불러올 수 없습니다.
+            """.strip()
             save_info(user_id=user_id, exhibition_id=exhibition_id,
-                      artwork_id=1, info_text="기본 정보 없음 (id not found)")
+                      artwork_id=0, info_text=info_text)
 
         return Response(data, status=status.HTTP_200_OK)
 
@@ -157,11 +168,12 @@ class UserViewedExhibitionsAPIView(APIView):
 # 2. 특정 전시에서 감상한 작품 리스트
 class UserArtworksInExhibitionAPIView(APIView):
     def get(self, request, user_id, exhibition_id):
-        artworks = ViewingHistory.objects.filter(
+        artwork_ids = ViewingHistory.objects.filter(
             user_id=user_id,
             exhibition_id=exhibition_id
-        ).order_by('-view_time')
-        serializer = ViewingHistorySerializer(artworks, many=True)
+        ).order_by('-view_time').values_list('artwork_id', flat=True).distinct()
+        artworks = Artwork.objects.filter(id__in=artwork_ids)
+        serializer = ViewedArtworkSerializer(artworks, many=True)
         return Response(serializer.data)
 
 
