@@ -5,8 +5,14 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import time
+from exhibition.models import Exhibition
+from datetime import datetime
 
-from exhibition.models import Exhibition  # 모델에 맞게 import
+def parse_date(date_str):
+    try:
+        return datetime.strptime(date_str.replace(".", "").strip(), "%Y%m%d").date()
+    except:
+        return None
 
 class Command(BaseCommand):
     help = '네이버 전시회 페이지를 크롤링해서 Exhibition 테이블에 저장합니다.'
@@ -31,8 +37,11 @@ class Command(BaseCommand):
                     title = e.find_element(By.CSS_SELECTOR, ".img_box img").get_attribute("alt")
 
                     dates = e.find_elements(By.CLASS_NAME, "info_date")
-                    start_date = dates[0].text.strip() if len(dates) > 0 else ""
-                    end_date = dates[1].text.strip() if len(dates) > 1 else ""
+                    start_date_raw = dates[0].text.strip() if len(dates) > 0 else ""
+                    end_date_raw = dates[1].text.strip() if len(dates) > 1 else ""
+
+                    start_date = parse_date(start_date_raw)
+                    end_date = parse_date(end_date_raw)
 
                     try:
                         place = e.find_elements(By.CLASS_NAME, "no_ellip")[1].text.strip()
