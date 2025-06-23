@@ -1,14 +1,21 @@
 from rest_framework import viewsets
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
 from .models import Review, Exhibition
 from .serializers import ReviewSerializer
 from django.contrib.auth import get_user_model
 
-User = get_user_model()  # ✅ 커스텀 유저 모델 적용
+User = get_user_model()
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return [AllowAny()]  # 조회는 모두 허용
+        return [IsAuthenticated()]  # 생성, 수정, 삭제 등은 인증 필요
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -27,7 +34,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
         except Exhibition.DoesNotExist:
             raise ValidationError("Exhibition not found")
 
-        # ✅ 임시 테스트 코드: id=1 유저
-        author = User.objects.get(id=1)
+        author = self.request.user
+        print(f"[DEBUG] user: {author}, authenticated: {author.is_authenticated}")
+        if not author.is_authenticated:
+            raise PermissionDenied("Authentication required")
 
         serializer.save(author=author, exhibition=exhibition)

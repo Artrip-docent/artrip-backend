@@ -134,4 +134,9 @@ def update_profile_view(request):
         user.profile_image = settings.MEDIA_URL + path
 
     user.save()
-    return Response({'message': '프로필이 업데이트 되었습니다.'})
+
+    return Response({
+        'message': '프로필이 업데이트 되었습니다.',
+        'nickname': user.nickname,
+        'profile_image_url': user.profile_image.url if user.profile_image else None
+    })
