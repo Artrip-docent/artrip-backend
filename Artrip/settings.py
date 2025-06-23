@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "artworks",
     "rest_framework",
+    'rest_framework.authtoken',  # 이 라인 꼭 추가
     'drf_yasg',  # Swagger 지원 패키지
     "corsheaders",
     # 'chat',
@@ -74,7 +75,11 @@ LOGOUT_REDIRECT_URL = '/'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',  # Token 인증 활성화
     ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',  # 인증된 사용자만 접근 가능
+    ],
 }
 
 MIDDLEWARE = [
