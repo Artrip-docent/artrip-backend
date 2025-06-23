@@ -52,6 +52,8 @@ def kakao_token_view(request):
         'message': '카카오 로그인 성공',
         'access': tokens['access'],
         'refresh': tokens['refresh'],
+        'user_id': user.id, # 추가
+        'is_first_login': user.is_first_login  # 추가
     })
 
 
@@ -106,7 +108,8 @@ def login_view(request):
             'message': '로그인 성공',
             'access': tokens['access'],
             'refresh': tokens['refresh'],
-            'user_id': user.id
+            'user_id': user.id,
+            'is_first_login': user.is_first_login  # 추가
         })
     return Response(serializer.errors, status=400)
 
@@ -140,3 +143,12 @@ def update_profile_view(request):
         'nickname': user.nickname,
         'profile_image_url': user.profile_image.url if user.profile_image else None
     })
+    return Response({'message': '프로필이 업데이트 되었습니다.'})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def complete_preference_view(request):
+    user = request.user
+    user.is_first_login = False
+    user.save()
+    return Response({'message': '취향 분석 완료 처리됨'})
