@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'accounts',
     'reviews',
     'exhibition',
+    'crawler',
 ]
 
 AUTHENTICATION_BACKENDS = (
