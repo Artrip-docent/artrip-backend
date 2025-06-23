@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import time
@@ -12,11 +13,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         options = Options()
-        options.add_argument("--headless")  # 서버용
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
 
-        driver = webdriver.Chrome(executable_path="/usr/bin/chromedriver", options=options)
+        service = Service("/usr/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=options)
         url = "https://search.naver.com/search.naver?query=전시회"
         driver.get(url)
         time.sleep(3)
