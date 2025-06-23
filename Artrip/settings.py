@@ -193,4 +193,4 @@ MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION")
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
