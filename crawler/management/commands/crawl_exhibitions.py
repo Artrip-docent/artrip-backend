@@ -28,11 +28,15 @@ class Command(BaseCommand):
         url = "https://search.naver.com/search.naver?query=전시회"
         driver.get(url)
         time.sleep(3)
-
+        cnt = 0
+        max_count = 50
         while True:
             cards = driver.find_elements(By.CLASS_NAME, "card_item")
             for e in cards:
                 try:
+                    if cnt >= max_count:
+                        driver.quit()
+                        return
                     img_url = e.find_element(By.CSS_SELECTOR, ".img_box img").get_attribute("src")
                     title = e.find_element(By.CSS_SELECTOR, ".img_box img").get_attribute("alt")
 
@@ -56,6 +60,7 @@ class Command(BaseCommand):
                             location=place,
                             image_url=img_url
                         )
+                    cnt+=1
 
                     self.stdout.write(self.style.SUCCESS(f'✔️ 삽입: {title}'))
                 except Exception as ex:
