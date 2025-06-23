@@ -64,7 +64,7 @@ def user_info_view(request):
     user = request.user
     profile_image_url = ''
     if user.profile_image:
-        profile_image_url = request.build_absolute_uri(user.profile_image)
+        profile_image_url = request.build_absolute_uri(user.profile_image.url)
 
     logger.info(f"Profile image URL: {profile_image_url}")
 
@@ -132,10 +132,9 @@ def update_profile_view(request):
         # media/profile_images/ 아래에 저장
         save_path = os.path.join('profile_images', profile_image.name)
         path = default_storage.save(save_path, ContentFile(profile_image.read()))
-
-        # URL 필드에 media URL과 경로 합쳐서 저장 (ex: /media/profile_images/filename.jpg)
-        user.profile_image = settings.MEDIA_URL + path
-
+        user.profile_image = path
+        # URL 필드에 media URL과 경로 합쳐서 저장
+        profile_image_url = request.build_absolute_uri(user.profile_image.url) if user.profile_image else None
     user.save()
 
     return Response({
