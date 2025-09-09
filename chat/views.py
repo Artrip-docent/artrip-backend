@@ -116,7 +116,7 @@ def chat_view(request):
             # 공통 프롬프트 템플릿
             prompt_template = PromptTemplate(
                 template=(
-                    "당신은 작품 도슨트입니다. 모든 답변은 30단어 이내로 친절하게 작성하세요.\n"
+                    "당신은 작품 도슨트입니다. 모든 답변은 50단어 이내로 친절하게 작성하세요.\n"
                     "{context}"
                     "Question: {question}\n"
                     "Answer:"
@@ -139,7 +139,7 @@ def chat_view(request):
             )
             if exhibition_id:
                 # exhibition_id가 있는 경우: RetrievalQA 체인 사용
-
+                print("✅ RAG 기반 답변")
                 retriever = pinecone_vectorstore.as_retriever(search_kwargs={
                     "filter": {"exhibition_id": exhibition_id}
                 })
@@ -170,6 +170,7 @@ def chat_view(request):
 
             else:
                 # exhibition_id가 없는 경우: RetrievalQA 없이 바로 LLM 호출
+                print("✅ 일반 GPT 기반 답변")
                 def run_chain():
                     try:
                         # 아래 한 줄이 핵심: llm(...) 호출 시 streaming=True 이므로
