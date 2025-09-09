@@ -87,12 +87,11 @@ class UploadArtworkView(APIView):
             )
 
             initial_message = f"""
-                        🎨 작품 정보 🎨
                         제목: {artwork.title}
                         작가: {artwork.artist}
                         연도: {artwork.year}
 
-                        📝 설명:
+    
                         {artwork.description}
                         """.strip()
 
@@ -103,12 +102,11 @@ class UploadArtworkView(APIView):
             # ✅ artwork 없음 처리
             data = {"error": f"Artwork with id {best_artwork_id} not found in DB."}
             info_text = """
-                🎨 작품 정보 🎨
                 제목: 제목 없음
                 작가: 작가 정보 없음
                 연도: 연도 정보 없음
                 
-                📝 설명:
+        
                 설명을 불러올 수 없습니다.
             """.strip()
             save_info(user_id=user_id, exhibition_id=exhibition_id,
@@ -126,7 +124,8 @@ class AnalyzePreferenceView(APIView):
         user_id = request.data.get("user_id", "default_user")
         artwork_ids = request.data.get("artwork_ids", [])
         if not artwork_ids:
-            return Response({"error": "작품 ID 목록이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "작품 ID 목록이 필요합니다."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         styles, moods = [], []
 
@@ -135,15 +134,17 @@ class AnalyzePreferenceView(APIView):
             styles.extend(tags.get("style", []))
             moods.extend(tags.get("mood", []))
 
-        # ✅ style + mood 통합 후 카운팅
-        combined_tags = styles + moods
-        tag_counter = Counter(combined_tags)
-        top_tags = tag_counter.most_common(5)
+        style_counter = Counter(styles)
+        mood_counter  = Counter(moods)
 
-        print("🎨 상위 5개 통합 태그:", top_tags)
+        movements = [{"name": k, "count": v} for k, v in style_counter.most_common(2)]
+        moods_out = [{"name": k, "count": v} for k, v in mood_counter.most_common(4)]
+        top_movement = movements[0]["name"] if movements else None
 
         return Response({
-            "top_tags": [tag for tag, _ in top_tags]  # 문자열 리스트로만 반환
+            "top_movement": top_movement,
+            "movements": movements,   # 전체 사조 반환
+            "moods": moods_out        # 전체 분위기 반환
         }, status=status.HTTP_200_OK)
 
 class RandomArtworksView(APIView): # 랜덤 작품 뷰 추가
