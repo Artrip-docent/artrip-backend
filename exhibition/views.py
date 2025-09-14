@@ -44,7 +44,7 @@ def exhibition_list_sorted_for_user(request):
         return JsonResponse({"error": "user_id 파라미터가 필요합니다."}, status=400)
 
     # liked 전시회를 우선으로 정렬
-    exhibitions = Exhibition.objects.annotate(
+    exhibitions = Exhibition.objects.select_related('gallery').annotate(
         is_liked=Case(
             When(liked_users__id=user_id, then=Value(0)),  # 좋아요한 전시는 0
             default=Value(1),  # 나머지는 1
@@ -57,7 +57,7 @@ def exhibition_list_sorted_for_user(request):
             'id': e.id,
             'title': e.title,
             'period': f"{e.start_date} ~ {e.end_date}",
-            'location': e.location,
+            'location': e.gallery.name if e.gallery else None,
             'imageUrl': e.image_url,
             'liked': (e.is_liked == 0)
         }
@@ -70,7 +70,7 @@ def search_exhibitions(request):
     query = request.GET.get('q', '')
 
     # 전시회 제목에서 검색어가 포함된 항목 찾기
-    exhibitions = Exhibition.objects.filter(Q(title__icontains=query)).distinct()
+    exhibitions = Exhibition.objects.select_related('gallery').filter(Q(title__icontains=query)).distinct()
 
     # JSON 형태로 응답
     data = [
@@ -79,7 +79,7 @@ def search_exhibitions(request):
             'title': exhibition.title,
             'start_date': exhibition.start_date,
             'end_date': exhibition.end_date,
-            'location': exhibition.location,
+            'location': exhibition.gallery.name if exhibition.gallery else None,
             'image_url': exhibition.image_url,
         }
         for exhibition in exhibitions
@@ -89,7 +89,7 @@ def search_exhibitions(request):
 
 def exhibition_list(request):
     exhibitions = Exhibition.objects.all().values(
-        'id', 'title', 'start_date', 'end_date', 'location', 'image_url'
+        'id', 'title', 'start_date', 'end_date', 'gallery__name', 'image_url'
     )
 
     # 날짜를 문자열로 변환해서 반환
@@ -98,7 +98,7 @@ def exhibition_list(request):
             'id': e['id'],
             'title': e['title'],
             'period': f"{e['start_date']} ~ {e['end_date']}",
-            'location': e['location'],
+            'location': e['gallery__name'],
             'imageUrl': e['image_url'],
         }
         for e in exhibitions
