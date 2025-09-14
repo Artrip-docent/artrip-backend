@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Exhibition, Document, Gallery
-from .forms import ExhibitionForm, DocumentForm, GalleryForm
+from exhibition.models import Exhibition
+from .models import Document
+from .forms import DocumentForm
 from django.http import JsonResponse
 from django.http import StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -249,10 +250,14 @@ def add_to_vector_db(document, content):
     print(f"문서 {document.id} (전시회 {document.exhibition.id})가 Pinecone에 저장되었습니다.")
 
 
+from exhibition.forms import GalleryForm, ExhibitionForm
+from artworks.forms import ArtworkForm
+
 def admin_page(request):
-    gallery_form = GalleryForm(prefix="gal")
-    exhibition_form = ExhibitionForm(prefix="exh")
     document_form = DocumentForm(prefix="doc")
+    gallery_form = GalleryForm(prefix="gallery")
+    exhibition_form = ExhibitionForm(prefix="exhibition")
+    artwork_form = ArtworkForm(prefix="artwork")
 
     if request.method == "POST":
         if "submit_document" in request.POST:
@@ -271,38 +276,54 @@ def admin_page(request):
                 add_to_vector_db(doc_instance, content)
                 messages.success(request, "문서가 성공적으로 업로드되었습니다.")
                 return redirect("admin_page")
+            else:
+                messages.error(request, "문서 업로드에 실패했습니다.")
+                print("📛 Document form errors:", document_form.errors)
 
         elif "submit_gallery" in request.POST:
-            gallery_form = GalleryForm(request.POST, prefix="gal")
+            gallery_form = GalleryForm(request.POST, prefix="gallery")
             if gallery_form.is_valid():
                 gallery_form.save()
-                messages.success(request, "갤러리가 추가되었습니다.")
+                messages.success(request, "갤러리가 성공적으로 추가되었습니다.")
                 return redirect("admin_page")
             else:
                 messages.error(request, "갤러리 추가에 실패했습니다.")
-                print("📛 Gallery form errors:", gallery_form.errors)
 
         elif "submit_exhibition" in request.POST:
-            exhibition_form = ExhibitionForm(request.POST, prefix="exh")
+            exhibition_form = ExhibitionForm(request.POST, prefix="exhibition")
             if exhibition_form.is_valid():
                 exhibition_form.save()
-                messages.success(request, "전시회가 추가되었습니다.")
+                messages.success(request, "전시회가 성공적으로 추가되었습니다.")
                 return redirect("admin_page")
             else:
                 messages.error(request, "전시회 추가에 실패했습니다.")
-                print("📛 Exhibition form errors:", exhibition_form.errors)
 
-    exhibitions = Exhibition.objects.select_related("gallery").all().order_by("-id")
-    documents = Document.objects.select_related("exhibition", "exhibition__gallery").all().order_by("-created_at")
-    galleries = Gallery.objects.all()
+        elif "submit_artwork" in request.POST:
+            artwork_form = ArtworkForm(request.POST, request.FILES, prefix="artwork")
+            if artwork_form.is_valid():
+                artwork_form.save()
+                messages.success(request, "작품이 성공적으로 추가되었습니다.")
+                return redirect("admin_page")
+            else:
+                messages.error(request, "작품 추가에 실패했습니다.")
+
+
+    search_query = request.GET.get('q', '')
+    if search_query:
+        exhibitions = Exhibition.objects.filter(title__icontains=search_query).order_by("-id")
+    else:
+        exhibitions = Exhibition.objects.all().order_by("-id")
+
+    documents = Document.objects.select_related("exhibition").all().order_by("-created_at")
 
     context = {
+        "document_form": document_form,
         "gallery_form": gallery_form,
         "exhibition_form": exhibition_form,
-        "document_form": document_form,
+        "artwork_form": artwork_form,
         "exhibitions": exhibitions,
         "documents": documents,
-        "galleries": galleries,
+        "search_query": search_query,
     }
     return render(request, "chat/admin_page.html", context)
 

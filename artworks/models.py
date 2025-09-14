@@ -2,17 +2,27 @@ from django.db import models
 from exhibition.models import Exhibition
 from django.conf import settings
 
-class Artwork(models.Model):  # ✅ 이 부분이 파일 최상단에 있어야 함
-    id = models.IntegerField(primary_key=True)  # 인덱스 파일과 일치하는 id
+def get_next_artwork_id():
+    """
+    가장 높은 ID를 찾아 1을 더한 값을 반환합니다.
+    """
+    highest_artwork = Artwork.objects.all().order_by('-id').first()
+    if highest_artwork:
+        return highest_artwork.id + 1
+    return 1  # 작품이 하나도 없을 경우 1부터 시작
+
+class Artwork(models.Model):
+    id = models.IntegerField(primary_key=True, default=get_next_artwork_id) # 자동 ID 할당
     title = models.CharField(max_length=255)
     artist = models.CharField(max_length=255)
     year = models.CharField(max_length=10)
     description = models.TextField(blank=True, null=True)
-    mood = models.CharField(max_length=255, blank=True, null=True)  # 예: "Calm", "Dramatic" 등
-    style = models.CharField(max_length=255, blank=True, null=True)      # 예: "Renaissance", "Impressionism" 등
-    technique = models.CharField(max_length=255, blank=True, null=True)  # 예: "Oil on canvas", "Tempera" 등
-    image_url = models.URLField(blank=True, null=True)                   # 작품 이미지의 URL (선택 사항)
-    created_at = models.DateTimeField(auto_now_add=True)                 # 레코드 생성 시간
+    mood = models.CharField(max_length=255, blank=True, null=True)
+    style = models.CharField(max_length=255, blank=True, null=True)
+    technique = models.CharField(max_length=255, blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True) # 기존 필드 유지
+    image = models.ImageField(upload_to='artworks/', blank=True, null=True) # 새 이미지 필드
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title

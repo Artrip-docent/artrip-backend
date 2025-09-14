@@ -4,6 +4,12 @@ import openai
 import json
 from dotenv import load_dotenv
 from collections import Counter
+import torch
+from PIL import Image
+import numpy as np
+import faiss
+from django.apps import apps
+from django.conf import settings
 
 def call_clip_model(image):
     """
@@ -59,3 +65,56 @@ def extract_tags_from_gpt(title, description):
     except Exception as e:
         print(f"❌ GPT 태그 추출 실패: {e}")
         return {"style": [], "mood": []}
+
+def add_artwork_to_index(artwork_instance):
+    """
+    새로운 작품을 Faiss 인덱스에 추가하고 파일로 저장합니다.
+    """
+    # 1. AppConfig에서 Faiss 인덱스, artwork_ids, CLIP 모델 등을 가져옴
+    config = apps.get_app_config('artworks')
+    if config.faiss_index is None or config.artwork_ids is None:
+        print("❌ Faiss index not loaded.")
+        return
+
+    model = config.clip_model
+    preprocess = config.clip_preprocess
+    device = config.device
+    index = config.faiss_index
+    artwork_ids = config.artwork_ids
+
+    # 2. 새로 추가된 작품의 이미지 벡터화
+    try:
+        image = Image.open(artwork_instance.image.path).convert("RGB")
+        image_input = preprocess(image).unsqueeze(0).to(device)
+        with torch.no_grad():
+            features = model.encode_image(image_input)
+        
+        # 벡터 정규화
+        features /= features.norm(dim=-1, keepdim=True)
+        new_vector = features.cpu().numpy()
+    except Exception as e:
+        print(f"❌ Image vectorization failed: {e}")
+        return
+
+    # 3. Faiss 인덱스 및 ID 배열 업데이트
+    index.add(new_vector)
+    
+    new_artwork_id = artwork_instance.id
+    artwork_ids = np.append(artwork_ids, new_artwork_id)
+
+    # 4. 변경된 인덱스와 ID 배열을 파일에 저장
+    try:
+        index_path = os.path.join(settings.BASE_DIR, 'indexes', 'artwork.index')
+        ids_path = os.path.join(settings.BASE_DIR, 'indexes', 'artwork_ids.npy')
+
+        faiss.write_index(index, index_path)
+        np.save(ids_path, artwork_ids)
+
+        config.faiss_index = index
+        config.artwork_ids = artwork_ids
+
+        print(f"✅ Artwork {new_artwork_id} added to Faiss index and saved to disk.")
+        print(f"Total vectors in index: {index.ntotal}")
+
+    except Exception as e:
+        print(f"❌ Failed to save Faiss index or IDs: {e}")
