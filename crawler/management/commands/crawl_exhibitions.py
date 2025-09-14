@@ -1,11 +1,12 @@
 from django.core.management.base import BaseCommand
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import time
-from exhibition.models import Exhibition
+from exhibition.models import Exhibition, Gallery
 from datetime import datetime
 
 def parse_date(date_str):
@@ -23,8 +24,7 @@ class Command(BaseCommand):
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
 
-        service = Service("/usr/bin/chromedriver")
-        driver = webdriver.Chrome(service=service, options=options)
+        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
         url = "https://search.naver.com/search.naver?query=전시회"
         driver.get(url)
         time.sleep(3)
@@ -51,13 +51,15 @@ class Command(BaseCommand):
                         place = e.find_elements(By.CLASS_NAME, "no_ellip")[1].text.strip()
                     except:
                         place = ""
+                    
+                    gallery, created = Gallery.objects.get_or_create(name=place)
 
-                    if not Exhibition.objects.filter(title=title, start_date=start_date, location=place).exists():
+                    if not Exhibition.objects.filter(title=title, start_date=start_date, gallery=gallery).exists():
                         Exhibition.objects.create(
                             title=title,
                             start_date=start_date,
                             end_date=end_date,
-                            location=place,
+                            gallery=gallery,
                             image_url=img_url
                         )
                     cnt+=1
