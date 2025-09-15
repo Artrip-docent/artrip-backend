@@ -63,12 +63,24 @@ class UploadArtworkView(APIView):
         features = features / features.norm(dim=-1, keepdim=True)
         query_vector = features.cpu().numpy()
 
-        # 5. Faiss 인덱스 검색: 상위 1개의 결과 찾기
-        distances, indices = index.search(query_vector, 1)
-        best_idx = indices[0][0]
-        best_artwork_id = int(artwork_ids[best_idx])
+        # 5. Faiss 인덱스 검색: 상위 3개의 결과 찾기 (디버깅용)
+        k = 3
+        distances, indices = index.search(query_vector, k)
 
-        # 6. DB에서 해당 artwork_id에 해당하는 작품 정보 조회
+        print("\n[CLIP Match Analysis]")
+        for i in range(k):
+            artwork_id = int(artwork_ids[indices[0][i]])
+            distance = distances[0][i]
+            cosine_similarity = 1 - (distance**2) / 2
+            try:
+                artwork_title = Artwork.objects.get(id=artwork_id).title
+                print(f"  Rank {i+1}: Artwork ID={artwork_id}, Title='{artwork_title}', Similarity={cosine_similarity:.4f}")
+            except Artwork.DoesNotExist:
+                print(f"  Rank {i+1}: Artwork ID={artwork_id} (Not in DB), Similarity={cosine_similarity:.4f}")
+        print("--------------------")
+
+        # 6. DB에서 최상위 작품 정보 조회 (기존 로직 유지)
+        best_artwork_id = int(artwork_ids[indices[0][0]])
         try:
             artwork = Artwork.objects.get(id=best_artwork_id)
             data = {

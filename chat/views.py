@@ -253,6 +253,7 @@ def add_to_vector_db(document, content):
 
 from exhibition.forms import GalleryForm, ExhibitionForm
 from artworks.forms import ArtworkForm
+from artworks.utils import add_artwork_to_index
 
 def admin_page(request):
     document_form = DocumentForm(prefix="doc")
@@ -302,8 +303,9 @@ def admin_page(request):
         elif "submit_artwork" in request.POST:
             artwork_form = ArtworkForm(request.POST, request.FILES, prefix="artwork")
             if artwork_form.is_valid():
-                artwork_form.save()
-                messages.success(request, "작품이 성공적으로 추가되었습니다.")
+                artwork_instance = artwork_form.save()
+                add_artwork_to_index(artwork_instance)
+                messages.success(request, "작품이 성공적으로 추가되고 인덱싱되었습니다.")
                 return redirect("admin_page")
             else:
                 messages.error(request, "작품 추가에 실패했습니다.")

@@ -4,7 +4,7 @@ from .models import Artwork
 class ArtworkForm(forms.ModelForm):
     class Meta:
         model = Artwork
-        fields = ['title', 'artist', 'image']
+        fields = ['title', 'artist', 'description', 'image']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'artist': forms.TextInput(attrs={'class': 'form-control'}),
