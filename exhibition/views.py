@@ -5,10 +5,12 @@ from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 import json
 from django.db.models import Case, When, Value, IntegerField, Q
+from django.utils import timezone
 
 from .models import Exhibition
 
 User = get_user_model()
+
 
 # 좋아요 토글 api
 @csrf_exempt
@@ -25,7 +27,7 @@ def toggle_like(request):
         user = get_object_or_404(User, id=user_id)
         exhibition = get_object_or_404(Exhibition, id=exhibition_id)
 
-        if user in exhibition.liked_users.all():
+        if exhibition.liked_users.filter(id=user.id).exists():
             exhibition.liked_users.remove(user)
             liked = False
         else:
@@ -37,71 +39,124 @@ def toggle_like(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "JSON 파싱 실패"}, status=400)
 
-# 좋아요 누른 전시회 우선 정렬 api
+
+# 좋아요 우선 + 진행중→예정→지난 + 시작일 오름차순
 def exhibition_list_sorted_for_user(request):
     user_id = request.GET.get('user_id')
     if not user_id:
         return JsonResponse({"error": "user_id 파라미터가 필요합니다."}, status=400)
 
-    # liked 전시회를 우선으로 정렬
-    exhibitions = Exhibition.objects.select_related('gallery').annotate(
-        is_liked=Case(
-            When(liked_users__id=user_id, then=Value(0)),  # 좋아요한 전시는 0
-            default=Value(1),  # 나머지는 1
-            output_field=IntegerField()
+    try:
+        user_id_int = int(user_id)
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "user_id는 정수여야 합니다."}, status=400)
+
+    today = timezone.localdate()
+
+    exhibitions = (
+        Exhibition.objects.select_related('gallery')
+        .annotate(
+            is_liked=Case(
+                When(liked_users__id=user_id_int, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField()
+            ),
+            status_order=Case(
+                When(end_date__lt=today, then=Value(2)),  # 지난
+                When(start_date__lte=today, end_date__gte=today, then=Value(0)),  # 진행중
+                When(start_date__gt=today, then=Value(1)),  # 예정
+                default=Value(3),
+                output_field=IntegerField()
+            ),
         )
-    ).order_by('is_liked', '-start_date')  # 좋아요 먼저, 최신순
+        .order_by('is_liked', 'status_order', 'start_date', 'id')
+        .distinct()
+    )
 
     data = [
         {
             'id': e.id,
             'title': e.title,
             'period': f"{e.start_date} ~ {e.end_date}",
-            'location': e.gallery.name if e.gallery else None,
+            'location': (e.gallery.name if e.gallery else ""),
             'imageUrl': e.image_url,
-            'liked': (e.is_liked == 0)
+            'liked': (e.is_liked == 0),
         }
         for e in exhibitions
     ]
     return JsonResponse(data, safe=False)
 
-# 전시회 검색(제목 기준) api (-> 하단 왼쪽 탭, 가운데 탭에 연동)
+
+# 전시회 검색(제목 기준) - 진행중→예정→지난 순 정렬, 응답 포맷은 기존과 동일(image_url)
 def search_exhibitions(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
+    today = timezone.localdate()
 
-    # 전시회 제목에서 검색어가 포함된 항목 찾기
-    exhibitions = Exhibition.objects.select_related('gallery').filter(Q(title__icontains=query)).distinct()
-
-    # JSON 형태로 응답
-    data = [
-        {
-            'id': exhibition.id,
-            'title': exhibition.title,
-            'start_date': exhibition.start_date,
-            'end_date': exhibition.end_date,
-            'location': exhibition.gallery.name if exhibition.gallery else None,
-            'image_url': exhibition.image_url,
-        }
-        for exhibition in exhibitions
-    ]
-
-    return JsonResponse({'results': data}, status=200)
-
-def exhibition_list(request):
-    exhibitions = Exhibition.objects.all().values(
-        'id', 'title', 'start_date', 'end_date', 'gallery__name', 'image_url'
+    exhibitions = (
+        Exhibition.objects.select_related('gallery')
+        .filter(Q(title__icontains=query))
+        .annotate(
+            status_order=Case(
+                When(end_date__lt=today, then=Value(2)),  # 지난
+                When(start_date__lte=today, end_date__gte=today, then=Value(0)),  # 진행중
+                When(start_date__gt=today, then=Value(1)),  # 예정
+                default=Value(3),
+                output_field=IntegerField()
+            )
+        )
+        .order_by('status_order', 'start_date', 'id')
+        .distinct()
     )
 
-    # 날짜를 문자열로 변환해서 반환
     data = [
         {
-            'id': e['id'],
-            'title': e['title'],
-            'period': f"{e['start_date']} ~ {e['end_date']}",
-            'location': e['gallery__name'],
-            'imageUrl': e['image_url'],
+            "id": e.id,
+            "title": e.title,
+            "period": f"{e.start_date} ~ {e.end_date}",
+            "start_date": str(e.start_date),
+            "end_date": str(e.end_date),
+            "location": (e.gallery.name if e.gallery else ""),   # 널 방어
+            "imageUrl": e.image_url,  # 목록과 동일 키
+            "image_url": e.image_url, # 하위호환(둘 다 내려줌)
         }
         for e in exhibitions
     ]
+    return JsonResponse(data, safe=False)  # ← 배열 루트로 통일
 
+
+# 전체 전시 리스트
+# 기본: ?scope=active → 지난 전시 제외
+#       ?scope=all    → 모두 포함 (정렬은 동일: 진행중→예정→지난)
+def exhibition_list(request):
+    scope = request.GET.get('scope', 'active').lower()
+    today = timezone.localdate()
+
+    qs = (
+        Exhibition.objects.select_related('gallery')
+        .annotate(
+            status_order=Case(
+                When(end_date__lt=today, then=Value(2)),  # 지난
+                When(start_date__lte=today, end_date__gte=today, then=Value(0)),  # 진행중
+                When(start_date__gt=today, then=Value(1)),  # 예정
+                default=Value(3),
+                output_field=IntegerField()
+            )
+        )
+    )
+
+    if scope == 'active':
+        qs = qs.filter(end_date__gte=today)  # 지난 전시 제외
+
+    exhibitions = qs.order_by('status_order', 'start_date', 'id').distinct()
+
+    data = [
+        {
+            'id': e.id,
+            'title': e.title,
+            'period': f"{e.start_date} ~ {e.end_date}",
+            'location': (e.gallery.name if e.gallery else ""),
+            'imageUrl': e.image_url,  # 기존 목록 응답 키(imageUrl) 유지
+        }
+        for e in exhibitions
+    ]
     return JsonResponse(data, safe=False)
