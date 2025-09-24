@@ -130,6 +130,7 @@ class UploadArtworkView(APIView):
 user_preferences_store = {
     # 예: "user1": {"style": Counter(...), "mood": Counter(...)}
 }
+
 class AnalyzePreferenceView(APIView):
     def post(self, request):
         print("✅ [ANALYZE] 요청 데이터:", request.data)
@@ -147,7 +148,7 @@ class AnalyzePreferenceView(APIView):
             moods.extend(tags.get("mood", []))
 
         style_counter = Counter(styles)
-        mood_counter  = Counter(moods)
+        mood_counter = Counter(moods)
 
         movements = [{"name": k, "count": v} for k, v in style_counter.most_common(2)]
         moods_out = [{"name": k, "count": v} for k, v in mood_counter.most_common(4)]
@@ -155,14 +156,15 @@ class AnalyzePreferenceView(APIView):
 
         return Response({
             "top_movement": top_movement,
-            "movements": movements,   # 전체 사조 반환
-            "moods": moods_out        # 전체 분위기 반환
+            "movements": movements,  # 전체 사조 반환
+            "moods": moods_out  # 전체 분위기 반환
         }, status=status.HTTP_200_OK)
 
-class RandomArtworksView(APIView): # 랜덤 작품 뷰 추가
+
+class RandomArtworksView(APIView):  # 랜덤 작품 뷰 추가
     def get(self, request):
         artworks = list(Artwork.objects.all())
-        random_artworks = random.sample(artworks, min(len(artworks), 4))  # 최대 4개 랜덤
+        random_artworks = random.sample(artworks, min(len(artworks), 12))  # 최대 12개 랜덤
         serializer = ArtworkSerializer(random_artworks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -177,6 +179,7 @@ class UserViewedExhibitionsAPIView(APIView):
         exhibitions = Exhibition.objects.filter(id__in=exhibition_ids)
         serializer = ExhibitionSerializer(exhibitions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 # 2. 특정 전시에서 감상한 작품 리스트
 class UserArtworksInExhibitionAPIView(APIView):
