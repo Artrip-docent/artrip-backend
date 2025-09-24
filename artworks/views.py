@@ -186,7 +186,13 @@ class UserArtworksInExhibitionAPIView(APIView):
             exhibition_id=exhibition_id
         ).order_by('-view_time').values_list('artwork_id', flat=True).distinct()
         artworks = Artwork.objects.filter(id__in=artwork_ids)
-        serializer = ViewedArtworkSerializer(artworks, many=True)
+
+        try:
+            exhibition = Exhibition.objects.get(id=exhibition_id)
+        except Exhibition.DoesNotExist:
+            return Response({"error": "Exhibition not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ViewedArtworkSerializer(artworks, many=True, context={'exhibition': exhibition})
         return Response(serializer.data)
 
 

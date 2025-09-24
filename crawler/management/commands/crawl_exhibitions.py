@@ -29,7 +29,7 @@ class Command(BaseCommand):
         driver.get(url)
         time.sleep(3)
         cnt = 0
-        max_count = 50
+        max_count = 1000
         while True:
             cards = driver.find_elements(By.CLASS_NAME, "card_item")
             for e in cards:
