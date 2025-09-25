@@ -11,6 +11,8 @@ from .utils import extract_tags_from_gpt
 from collections import Counter
 from .serializers import ArtworkSerializer, ViewedArtworkSerializer
 import random
+from itertools import cycle, islice
+from django.db.models import Q
 from chat.mongo_utils import save_info
 from .models import ViewingHistory
 from .models import Artwork
@@ -161,12 +163,27 @@ class AnalyzePreferenceView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-class RandomArtworksView(APIView):  # 랜덤 작품 뷰 추가
+class RandomArtworksView(APIView):
     def get(self, request):
-        artworks = list(Artwork.objects.all())
-        random_artworks = random.sample(artworks, min(len(artworks), 12))  # 최대 12개 랜덤
-        serializer = ArtworkSerializer(random_artworks, many=True)
+        # 1) image_url이 NULL이거나 빈 문자열인 데이터는 제외
+        qs = Artwork.objects.filter(~Q(image_url__isnull=True), ~Q(image_url__exact=""))
+
+        items = list(qs)
+        if not items:
+            return Response([], status=status.HTTP_200_OK)
+
+        # 2) 섞어서 최대 12개 뽑기
+        random.shuffle(items)
+        picked = items[:12]
+
+        # 3) 12개 미만이면 순환 채움으로 정확히 12개 보장
+        if len(picked) < 12:
+            picked = list(islice(cycle(items), 12))
+
+        # 4) 직렬화해서 응답
+        serializer = ArtworkSerializer(picked, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class UserViewedExhibitionsAPIView(APIView):

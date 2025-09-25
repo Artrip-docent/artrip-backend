@@ -126,7 +126,7 @@ def chat_view(request):
             )
 
             llm = ChatOpenAI(
-                model_name="gpt-4o-mini",
+                model_name="gpt-4.1-nano",
                 temperature=0,
                 openai_api_key=settings.OPENAI_API_KEY,
                 streaming=True,
@@ -351,5 +351,3 @@ def delete_document(request, doc_id):
         messages.error(request, "잘못된 요청입니다.")
 
     return redirect("admin_page")
-
-
